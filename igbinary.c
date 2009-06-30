@@ -1718,8 +1718,16 @@ inline static int igbinary_unserialize_ref(struct igbinary_unserialize_data *igs
 	}
 
 	*z = igsd->references[n];
-	(**z).refcount++;
-	(**z).is_ref = 1;
+#ifdef Z_ADDREF_PP
+	Z_ADDREF_PP(z);
+#else
+	ZVAL_ADDREF(*z);
+#endif
+#ifdef Z_SET_ISREF_PP
+	Z_SET_ISREF_PP(z);
+#else
+	PZVAL_IS_REF(*z) = 1;
+#endif
 
 	return 0;
 }
