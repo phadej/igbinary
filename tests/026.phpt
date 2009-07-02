@@ -1,5 +1,5 @@
 --TEST--
-Check for reference serialisation
+Cyclic array test
 --INI--
 report_memleaks=0
 --SKIPIF--
@@ -20,19 +20,23 @@ function test($type, $variable, $test) {
 	echo "\n";
 }
 
-$a = array('foo');
+$a = array(
+	'a' => array(
+		'b' => 'c',
+		'd' => 'e'
+	),
+);
 
-test('array($a, $a)', array($a, $a), false);
-test('array(&$a, &$a)', array(&$a, &$a), false);
+$a['f'] = &$a;
 
-$a = array(null);
-$b = array(&$a);
-$a[0] = &$b;
+test('array', $a, true);
 
-test('cyclic', $a, true);
-
+$a = array("foo" => &$b);
+$b = array(1, 2, $a);
 var_dump(unserialize(serialize($a)));
 var_dump(igbinary_unserialize(igbinary_serialize($a)));
+
+
 
 /*
  * you can add regression tests for your extension here
@@ -47,25 +51,27 @@ var_dump(igbinary_unserialize(igbinary_serialize($a)));
  */
 ?>
 --EXPECT--
-array($a, $a)
-14020600140106001103666f6f0601140106000e00
-OK
-array(&$a, &$a)
-14020600140106001103666f6f06010101
-OK
-cyclic
-1401060014010600140106000101
+array
+1402110161140211016211016311016411016511016614020e0014020e010e020e030e040e050102
 OK
 array(1) {
-  [0]=>
-  &array(1) {
+  ["foo"]=>
+  &array(3) {
     [0]=>
+    int(1)
+    [1]=>
+    int(2)
+    [2]=>
     array(1) {
-      [0]=>
-      &array(1) {
+      ["foo"]=>
+      &array(3) {
         [0]=>
+        int(1)
+        [1]=>
+        int(2)
+        [2]=>
         array(1) {
-          [0]=>
+          ["foo"]=>
           *RECURSION*
         }
       }
@@ -73,15 +79,23 @@ array(1) {
   }
 }
 array(1) {
-  [0]=>
-  &array(1) {
+  ["foo"]=>
+  &array(3) {
     [0]=>
+    int(1)
+    [1]=>
+    int(2)
+    [2]=>
     array(1) {
-      [0]=>
-      &array(1) {
+      ["foo"]=>
+      &array(3) {
         [0]=>
+        int(1)
+        [1]=>
+        int(2)
+        [2]=>
         array(1) {
-          [0]=>
+          ["foo"]=>
           *RECURSION*
         }
       }

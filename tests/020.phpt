@@ -31,14 +31,14 @@ test('incom', '0000000117034f626a140211016106011101620602', false);
  * writing regression tests
  */
 ?>
---EXPECT--
+--EXPECTF--
 incom
 17034f626a140211016106011101620602
-object(__PHP_Incomplete_Class)#1 (3) {
+object(__PHP_Incomplete_Class)#%d (3) {
+  ["__PHP_Incomplete_Class_Name"]=>
+  string(3) "Obj"
   ["a"]=>
   int(1)
   ["b"]=>
   int(2)
-  ["__PHP_Incomplete_Class_Name"]=>
-  string(3) "Obj"
 }

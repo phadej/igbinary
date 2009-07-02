@@ -44,3 +44,9 @@ Release_TS_inline
 Debug_TS
 run-tests.php
 cscope.out
+tests/*.out
+tests/*.php
+tests/*.mem
+tests/*.diff
+tests/*.log
+tests/*.exp
