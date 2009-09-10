@@ -83,6 +83,8 @@ enum igbinary_type {
 	/* 22 */ igbinary_type_objref8,			/**< Object reference. */
 	/* 23 */ igbinary_type_objref16,		/**< Object reference. */
 	/* 24 */ igbinary_type_objref32,		/**< Object reference. */
+
+	/* 25 */ igbinary_type_ref,             /**< Simple reference */
 };
 
 /** Serializer data.
@@ -782,7 +784,7 @@ inline static int igbinary_serialize_array_ref(struct igbinary_serialize_data *i
 		t = hash_si_size(&igsd->objects);
 		hash_si_insert(&igsd->objects, (char *)&key, sizeof(key), t);
 		return 1;
-	} else if (PZVAL_IS_REF(z) || Z_TYPE_P(z) == IS_OBJECT) {
+	} else {
 		enum igbinary_type type;
 		if (*i <= 0xff) {
 			type = object ? igbinary_type_objref8 : igbinary_type_ref8;
@@ -1058,6 +1060,9 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 /* {{{ igbinary_serialize_zval */
 /** Serialize zval. */
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
+	if (PZVAL_IS_REF(z)) {
+		igbinary_serialize8(igsd, (uint8_t) igbinary_type_ref TSRMLS_CC);
+	}
 	switch (Z_TYPE_P(z)) {
 		case IS_RESOURCE:
 			return igbinary_serialize_null(igsd TSRMLS_CC);
@@ -1760,12 +1765,6 @@ inline static int igbinary_unserialize_ref(struct igbinary_unserialize_data *igs
 #else
 	PZVAL_IS_REF(*z) = 0;
 #endif
-	} else {
-#ifdef Z_SET_ISREF_PP
-	Z_SET_ISREF_PP(z);
-#else
-	PZVAL_IS_REF(*z) = 1;
-#endif
 	}
 
 	return 0;
@@ -1789,6 +1788,12 @@ static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zva
 	t = (enum igbinary_type) igbinary_unserialize8(igsd TSRMLS_CC);
 
 	switch (t) {
+		case igbinary_type_ref:
+			if (igbinary_unserialize_zval(igsd, z TSRMLS_CC)) {
+				return 1;
+			}
+			PZVAL_IS_REF(*z) = 1;
+			break;
 		case igbinary_type_objref8:
 		case igbinary_type_objref16:
 		case igbinary_type_objref32:

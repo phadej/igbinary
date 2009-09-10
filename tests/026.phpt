@@ -33,10 +33,12 @@ test('array', $a, true);
 
 $a = array("foo" => &$b);
 $b = array(1, 2, $a);
-var_dump(unserialize(serialize($a)));
-var_dump(igbinary_unserialize(igbinary_serialize($a)));
+var_dump($a);
+//var_dump(unserialize(serialize($a)));
+var_dump($k = igbinary_unserialize(igbinary_serialize($a)));
 
-
+$k["foo"][1] = "b";
+var_dump($k);
 
 /*
  * you can add regression tests for your extension here
@@ -52,7 +54,7 @@ var_dump(igbinary_unserialize(igbinary_serialize($a)));
 ?>
 --EXPECT--
 array
-1402110161140211016211016311016411016511016614020e0014020e010e020e030e040e050102
+140211016114021101621101631101641101651101662514020e0001010e05250102
 OK
 array(1) {
   ["foo"]=>
@@ -70,10 +72,7 @@ array(1) {
         [1]=>
         int(2)
         [2]=>
-        array(1) {
-          ["foo"]=>
-          *RECURSION*
-        }
+        *RECURSION*
       }
     }
   }
@@ -93,6 +92,27 @@ array(1) {
         int(1)
         [1]=>
         int(2)
+        [2]=>
+        *RECURSION*
+      }
+    }
+  }
+}
+array(1) {
+  ["foo"]=>
+  &array(3) {
+    [0]=>
+    int(1)
+    [1]=>
+    string(1) "b"
+    [2]=>
+    array(1) {
+      ["foo"]=>
+      &array(3) {
+        [0]=>
+        int(1)
+        [1]=>
+        string(1) "b"
         [2]=>
         array(1) {
           ["foo"]=>
