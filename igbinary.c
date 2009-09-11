@@ -396,7 +396,7 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	tmp_hash = HASH_OF(z);
 
 	zend_hash_internal_pointer_reset_ex(tmp_hash, &tmp_hash_pos);
-	while (zend_hash_get_current_data_ex(tmp_hash, (void **) &d, &tmp_hash_pos) == SUCCESS) {
+	while (zend_hash_get_current_data_ex(tmp_hash, (void *) &d, &tmp_hash_pos) == SUCCESS) {
 		tmp_int = zend_hash_get_current_key_ex(tmp_hash, &key_str, &key_len, &key_long, 0, &tmp_hash_pos);
 
 		switch (tmp_int) {
@@ -745,7 +745,7 @@ inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd,
 
 		/* we should still add element even if it's not OK,
 		   since we already wrote the length of the array before */
-		if (zend_hash_get_current_data_ex(h, (void **) &d, &pos) != SUCCESS || d == NULL) {
+		if (zend_hash_get_current_data_ex(h, (void *) &d, &pos) != SUCCESS || d == NULL) {
 			if (igbinary_serialize_null(igsd TSRMLS_CC)) {
 				return 1;
 			}
@@ -855,7 +855,7 @@ inline static int igbinary_serialize_array_sleep(struct igbinary_serialize_data 
 			continue;
 		}
 
-		if (zend_hash_get_current_data_ex(h, (void **) &d, &pos) != SUCCESS || d == NULL || Z_TYPE_PP(d) != IS_STRING) {
+		if (zend_hash_get_current_data_ex(h, (void *) &d, &pos) != SUCCESS || d == NULL || Z_TYPE_PP(d) != IS_STRING) {
 			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "__sleep should return an array only "
 					"containing the names of instance-variables to "
 					"serialize");
@@ -1060,7 +1060,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 /* {{{ igbinary_serialize_zval */
 /** Serialize zval. */
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
-	if (PZVAL_IS_REF(z)) {
+	if (Z_ISREF_P(z)) {
 		igbinary_serialize8(igsd, (uint8_t) igbinary_type_ref TSRMLS_CC);
 	}
 	switch (Z_TYPE_P(z)) {
@@ -1753,18 +1753,10 @@ inline static int igbinary_unserialize_ref(struct igbinary_unserialize_data *igs
 	}
 
 	*z = igsd->references[n];
-#ifdef Z_ADDREF_PP
 	Z_ADDREF_PP(z);
-#else
-	ZVAL_ADDREF(*z);
-#endif
 
 	if (t == igbinary_type_objref8 || t == igbinary_type_objref16 || t == igbinary_type_objref32) {
-#ifdef Z_UNSET_ISREF_PP
-	Z_UNSET_ISREF_PP(z);
-#else
-	PZVAL_IS_REF(*z) = 0;
-#endif
+	Z_SET_ISREF_TO_PP(z, false);
 	}
 
 	return 0;
@@ -1792,7 +1784,7 @@ static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zva
 			if (igbinary_unserialize_zval(igsd, z TSRMLS_CC)) {
 				return 1;
 			}
-			PZVAL_IS_REF(*z) = 1;
+			Z_SET_ISREF_TO_PP(z, true);
 			break;
 		case igbinary_type_objref8:
 		case igbinary_type_objref16:
