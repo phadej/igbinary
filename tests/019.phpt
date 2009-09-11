@@ -29,7 +29,7 @@ function __autoload($classname) {
 	}
 }
 
-test('autoload', '0000000117034f626a140211016106011101620602', false);
+test('autoload', '0000000217034f626a140211016106011101620602', false);
 
 /*
  * you can add regression tests for your extension here

@@ -20,7 +20,7 @@ function close() {
 function read($id) {
 	global $output;
 	$output .= "read\n";
-	return pack('H*', '0000000114011103666f6f0601');
+	return pack('H*', '0000000214011103666f6f0601');
 }
 
 function write($id, $data) {
