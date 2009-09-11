@@ -55,7 +55,7 @@ PHP_FUNCTION(igbinary_unserialize);
 #endif
 
 /** Binary protocol version of igbinary. */
-#define IGBINARY_FORMAT_VERSION 0x00000001
+#define IGBINARY_FORMAT_VERSION 0x00000002
 
 #endif /* PHP_IGBINARY_H */
 
