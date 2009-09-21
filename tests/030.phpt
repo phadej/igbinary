@@ -20,13 +20,14 @@ $datas = array(
 	(object)array(1,2,3),
 );
 
+error_reporting(0);
 foreach ($datas as $data) {
 	$str = igbinary_serialize($data);
 	$len = strlen($str);
 
 	// truncated
 	for ($i = 0; $i < $len - 1; $i++) {
-		$v = igbinary_unserialize(substr($str, 0, $len));
+		$v = igbinary_unserialize(substr($str, 0, $i));
 		if (is_object($data) && $v !== null && $v == $data) {
 			continue;
 		} elseif ($v !== null && $v !== $data) {
