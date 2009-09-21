@@ -271,6 +271,7 @@ int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC)
 	igsd.buffer_size = buf_len;
 
 	if (igbinary_unserialize_header(&igsd TSRMLS_CC)) {
+		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
 		return 1;
 	}
 
@@ -380,6 +381,7 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	igsd.buffer_size = vallen;
 
 	if (igbinary_unserialize_header(&igsd TSRMLS_CC)) {
+		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
 		return FAILURE;
 	}
 
@@ -1469,6 +1471,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 
 		if (igsd->buffer_offset + 1 > igsd->buffer_size) {
 			zend_error(E_WARNING, "igbinary_unserialize_array: end-of-data");
+			zval_dtor(*z);
+			ZVAL_NULL(*z);
 			return 1;
 		}
 
@@ -1484,6 +1488,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 			case igbinary_type_long64p:
 			case igbinary_type_long64n:
 				if (igbinary_unserialize_long(igsd, key_type, &key_index TSRMLS_CC)) {
+					zval_dtor(*z);
+					ZVAL_NULL(*z);
 					return 1;
 				}
 				break;
@@ -1491,6 +1497,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 			case igbinary_type_string_id16:
 			case igbinary_type_string_id32:
 				if (igbinary_unserialize_string(igsd, key_type, &key, &key_len TSRMLS_CC)) {
+					zval_dtor(*z);
+					ZVAL_NULL(*z);
 					return 1;
 				}
 				break;
@@ -1498,6 +1506,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 			case igbinary_type_string16:
 			case igbinary_type_string32:
 				if (igbinary_unserialize_chararray(igsd, key_type, &key, &key_len TSRMLS_CC)) {
+				zval_dtor(*z);
+				ZVAL_NULL(*z);
 					return 1;
 				}
 				break;
@@ -1509,6 +1519,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 				continue;
 			default:
 				zend_error(E_WARNING, "igbinary_unserialize_array: unknown key type '%02x', position %zu", key_type, igsd->buffer_offset);
+				zval_dtor(*z);
+				ZVAL_NULL(*z);
 				return 1;
 		}
 
@@ -1611,9 +1623,13 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 	zval *arg_func_name;
 
 	if (t == igbinary_type_object8 || t == igbinary_type_object16 || t == igbinary_type_object32) {
-		igbinary_unserialize_chararray(igsd, t, &name, &name_len TSRMLS_CC);
+		if (igbinary_unserialize_chararray(igsd, t, &name, &name_len TSRMLS_CC)) {
+			return 1;
+		}
 	} else if (t == igbinary_type_object_id8 || t == igbinary_type_object_id16 || t == igbinary_type_object_id32) {
-		igbinary_unserialize_string(igsd, t, &name, &name_len TSRMLS_CC);
+		if (igbinary_unserialize_string(igsd, t, &name, &name_len TSRMLS_CC)) {
+			return 1;
+		}
 	} else {
 		zend_error(E_WARNING, "igbinary_unserialize_object: unknown object type '%02x', position %zu", t, igsd->buffer_offset);
 		return 1;
@@ -1701,6 +1717,9 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 			return 1;
 	}
 
+	if (r) {
+		return r;
+	}
 
 	if (Z_OBJCE_PP(z) != PHP_IC_ENTRY && zend_hash_exists(&Z_OBJCE_PP(z)->function_table, "__wakeup", sizeof("__wakeup"))) {
 		INIT_PZVAL(&f);
