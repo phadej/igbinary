@@ -1440,10 +1440,16 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 		return 1;
 	}
 
+	// n cannot be larger than the number of minimum "objects" in the array
+	if (n > igsd->buffer_size - igsd->buffer_offset) {
+		zend_error(E_WARNING, "%s: data size %zu smaller that requested array length %zu.", __func__, igsd->buffer_size - igsd->buffer_offset, n);
+		return 1;
+	}
+
 	if (!object) {
 		Z_TYPE_PP(z) = IS_ARRAY;
 		ALLOC_HASHTABLE(Z_ARRVAL_PP(z));
-		zend_hash_init(Z_ARRVAL_PP(z), n+1, NULL, ZVAL_PTR_DTOR, 0);
+		zend_hash_init(Z_ARRVAL_PP(z), n + 1, NULL, ZVAL_PTR_DTOR, 0);
 
 		/* references */
 		if (igsd->references_count + 1 >= igsd->references_capacity) {
