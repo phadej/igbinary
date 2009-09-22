@@ -25,7 +25,7 @@ foreach ($datas as $data) {
 	$str = igbinary_serialize($data);
 	$len = strlen($str);
 
-	for ($j = 0; $j < 20; $j++) {
+	for ($j = 0; $j < 200; $j++) {
 		for ($i = 0; $i < $len - 1; $i++) {
 			$sub = substr($str, 0, $i);
 			$sub .= mcrypt_create_iv(30, MCRYPT_DEV_URANDOM);
