@@ -17,6 +17,10 @@ extern zend_module_entry igbinary_module_entry;
 #define PHP_IGBINARY_API
 #endif
 
+ZEND_BEGIN_MODULE_GLOBALS(igbinary)
+	zend_bool compact_strings;
+ZEND_END_MODULE_GLOBALS(igbinary)
+
 #ifdef ZTS
 #include "TSRM.h"
 #endif

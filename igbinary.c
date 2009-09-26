@@ -95,6 +95,7 @@ struct igbinary_serialize_data {
 	size_t buffer_size;			/**< Buffer size. */
 	size_t buffer_capacity;		/**< Buffer capacity. */
 	bool scalar;				/**< Serializing scalar. */
+	bool compact_strings;		/**< Check for duplicate strings. */
 	struct hash_si strings;		/**< Hash of already serialized strings. */
 	struct hash_si objects;		/**< Hash of already serialized objects. */
 	int error;					/**< Error number. Not used. */
@@ -203,10 +204,19 @@ zend_module_entry igbinary_module_entry = {
 	STANDARD_MODULE_PROPERTIES
 };
 /* }}} */
+
+ZEND_DECLARE_MODULE_GLOBALS(igbinary)
+
 /* {{{ ZEND_GET_MODULE */
 #ifdef COMPILE_DL_IGBINARY
 ZEND_GET_MODULE(igbinary)
 #endif
+/* }}} */
+
+/* {{{ INI entries */
+PHP_INI_BEGIN()
+	STD_PHP_INI_BOOLEAN("igbinary.compact_strings", "1", PHP_INI_ALL, OnUpdateBool, compact_strings, zend_igbinary_globals, igbinary_globals)
+PHP_INI_END()
 /* }}} */
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(igbinary) {
@@ -217,6 +227,8 @@ PHP_MINIT_FUNCTION(igbinary) {
 		PS_SERIALIZER_ENCODE_NAME(igbinary),
 		PS_SERIALIZER_DECODE_NAME(igbinary));
 #endif
+	REGISTER_INI_ENTRIES();
+
 	return SUCCESS;
 }
 /* }}} */
@@ -227,6 +239,8 @@ PHP_MSHUTDOWN_FUNCTION(igbinary) {
 	/*
 	 * unregister serializer?
 	 */
+	UNREGISTER_INI_ENTRIES();
+
 	return SUCCESS;
 }
 /* }}} */
@@ -238,6 +252,8 @@ PHP_MINFO_FUNCTION(igbinary) {
 	php_info_print_table_row(2, "igbinary version", IGBINARY_VERSION);
 	php_info_print_table_row(2, "igbinary revision", "$Id: igbinary.c,v 1.33 2009/03/18 06:44:13 tricky Exp $");
 	php_info_print_table_end();
+
+	DISPLAY_INI_ENTRIES();
 }
 /* }}} */
 /* {{{ int igbinary_serialize(uint8_t**, size_t*, zval*) */
@@ -439,6 +455,8 @@ inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *i
 		hash_si_init(&igsd->objects, 16);
 	}
 
+	igsd->compact_strings = (bool)IGBINARY_G(compact_strings);
+
 	return r;
 }
 /* }}} */
@@ -627,8 +645,8 @@ inline static int igbinary_serialize_string(struct igbinary_serialize_data *igsd
 		return 0;
 	}
 
-	if (igsd->scalar || hash_si_find(&igsd->strings, s, len, i) == 1) {
-		if (!igsd->scalar) {
+	if (igsd->scalar || !igsd->compact_strings || hash_si_find(&igsd->strings, s, len, i) == 1) {
+		if (!igsd->scalar && igsd->compact_strings) {
 			t = hash_si_size(&igsd->strings);
 			hash_si_insert(&igsd->strings, s, len, t);
 		}
