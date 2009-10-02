@@ -45,6 +45,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <file name="igbinary.php" role="doc" />
       <file name="igbinary.php.ini" role="doc" />
       <file name="tags.sh" role="doc" />
+      <file name="igbinary.spec" role="doc" />
 	
       <file name="ChangeLog" role="doc" />
       <file name="COPYING" role="doc" />
