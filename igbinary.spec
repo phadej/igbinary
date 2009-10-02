@@ -10,6 +10,7 @@ Summary:   PHP igbinary extension
 License:   PHP Style License (http://opensource.dynamoid.com/#license)
 Group:     Web/Applications
 URL:       http://opensource.dynamoid.com/
+# pear package creates .tgz file and the original source was .tar.gz
 Source:    http://opensource.dynamoid.com/igbinary-%{version}.tgz
 Prefix:    %{_prefix}
 Buildroot: %{_tmppath}/%{name}-%{version}-%{release}-root
@@ -27,7 +28,7 @@ igbinary stores PHP data structures in a compact binary form.
 /usr/bin/phpize && %configure && %{__make} %{?_smp_mflags}
 
 # Clean the buildroot so that it does not contain any stuff from previous builds
-%{__rm} -rf %{buildroot}
+[ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot}
 
 # Install the extension
 %{__make} install INSTALL_ROOT=%{buildroot}
