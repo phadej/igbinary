@@ -17,6 +17,10 @@ extern zend_module_entry igbinary_module_entry;
 #define PHP_IGBINARY_API
 #endif
 
+ZEND_BEGIN_MODULE_GLOBALS(igbinary)
+	zend_bool compact_strings;
+ZEND_END_MODULE_GLOBALS(igbinary)
+
 #ifdef ZTS
 #include "TSRM.h"
 #endif
@@ -55,8 +59,32 @@ PHP_FUNCTION(igbinary_unserialize);
 #endif
 
 /** Binary protocol version of igbinary. */
-#define IGBINARY_FORMAT_VERSION 0x00000001
+#define IGBINARY_FORMAT_VERSION 0x00000002
 
+/** Backport macros from php 5.3 */
+#ifndef Z_ISREF_P
+#define Z_ISREF_P(pz)                  PZVAL_IS_REF(pz)
+#endif
+
+#ifndef Z_ISREF_PP
+#define Z_ISREF_PP(ppz)                Z_ISREF_P(*(ppz))
+#endif
+
+#ifndef Z_SET_ISREF_TO_P
+#define Z_SET_ISREF_TO_P(pz, isref)    (Z_ISREF_P(pz) = (isref))
+#endif
+
+#ifndef Z_SET_ISREF_TO_PP
+#define Z_SET_ISREF_TO_PP(ppz, isref)  Z_SET_ISREF_TO_P(*(ppz), isref)
+#endif
+
+#ifndef Z_ADDREF_P
+#define Z_ADDREF_P(pz)                 ZVAL_ADDREF(pz)
+#endif
+
+#ifndef Z_ADDREF_PP
+#define Z_ADDREF_PP(ppz)               Z_ADDREF_P(*(ppz))
+#endif
 #endif /* PHP_IGBINARY_H */
 
 

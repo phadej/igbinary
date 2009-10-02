@@ -1,8 +1,6 @@
 --TEST--
-Check for serialization handler, ini-directive
+Check for serialization handler
 --SKIPIF--
---INI--
-session.serialize_handler=igbinary
 --FILE--
 <?php 
 if(!extension_loaded('igbinary')) {
@@ -21,11 +19,13 @@ function close() {
 
 function read($id) {
 	global $output;
+	$output .= "read\n";
 	return pack('H*', '0000000214011103666f6f0601');
 }
 
 function write($id, $data) {
 	global $output;
+	$output .= "wrote: ";
 	$output .= substr(bin2hex($data), 8). "\n";
 	return true;
 }
@@ -38,11 +38,23 @@ function gc($time) {
 	return true;
 }
 
+class Foo {
+}
+
+class Bar {
+}
+
+ini_set('session.serialize_handler', 'igbinary');
+
 session_set_save_handler('open', 'close', 'read', 'write', 'destroy', 'gc');
 
-session_start();
 
-echo ++$_SESSION['foo'], "\n";
+$db_object = new Foo();
+$session_object = new Bar();
+
+$v = session_start();
+var_dump($v);
+$_SESSION['test'] = "foobar";
 
 session_write_close();
 
@@ -61,5 +73,6 @@ echo $output;
  */
 ?>
 --EXPECT--
-2
-14011103666f6f0602
+bool(true)
+read
+wrote: 14021103666f6f06011104746573741106666f6f626172

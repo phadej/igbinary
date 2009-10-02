@@ -1,11 +1,14 @@
 --TEST--
 Check for reference serialisation
+--INI--
+report_memleaks=0
 --SKIPIF--
+<?php
+if(!extension_loaded('igbinary')) {
+	echo "skip no igbinary";
+}
 --FILE--
 <?php 
-if(!extension_loaded('igbinary')) {
-	dl('igbinary.' . PHP_SHLIB_SUFFIX);
-}
 
 function test($type, $variable, $test) {
 	$serialized = igbinary_serialize($variable);
@@ -28,25 +31,48 @@ $a[0] = &$b;
 
 test('cyclic', $a, true);
 
-/*
- * you can add regression tests for your extension here
- *
- * the output of your test code has to be equal to the
- * text in the --EXPECT-- section below for the tests
- * to pass, differences between the output and the
- * expected text are interpreted as failure
- *
- * see php5/README.TESTING for further information on
- * writing regression tests
- */
-?>
+var_dump($a);
+var_dump(igbinary_unserialize(igbinary_serialize($a)));
+
 --EXPECT--
 array($a, $a)
 14020600140106001103666f6f06010101
 OK
 array(&$a, &$a)
-14020600140106001103666f6f06010101
+1402060025140106001103666f6f0601250101
 OK
 cyclic
-1401060014010600140106000101
+1401060025140106002514010600250101
 OK
+array(1) {
+  [0]=>
+  &array(1) {
+    [0]=>
+    &array(1) {
+      [0]=>
+      &array(1) {
+        [0]=>
+        &array(1) {
+          [0]=>
+          *RECURSION*
+        }
+      }
+    }
+  }
+}
+array(1) {
+  [0]=>
+  &array(1) {
+    [0]=>
+    &array(1) {
+      [0]=>
+      &array(1) {
+        [0]=>
+        &array(1) {
+          [0]=>
+          *RECURSION*
+        }
+      }
+    }
+  }
+}
