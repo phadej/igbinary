@@ -1,4 +1,4 @@
-# Define version and release
+# Define version and release number
 %define version 1.0.2
 %define release 1
 
