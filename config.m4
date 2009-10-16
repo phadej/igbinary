@@ -23,7 +23,17 @@ if test "$PHP_IGBINARY" != "no"; then
 
   AC_CHECK_SIZEOF([long])
 
-  PHP_IGBINARY_CFLAGS="-Wall -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
+  dnl GCC
+	AC_MSG_CHECKING(compiler type)
+	if test ! -z "`$CC --version | grep -i GCC`"; then
+	  AC_MSG_RESULT(gcc)
+		PHP_IGBINARY_CFLAGS="-Wall -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
+	elif test ! -z "`$CC --version | grep -i ICC`"; then
+	  AC_MSG_RESULT(icc)
+		PHP_IGBINARY_CFLAGS="-no-prec-div -O3 -x0 -unroll2"
+	else
+	  AC_MSG_RESULT(other)
+	fi
 
   PHP_INSTALL_HEADERS([ext/igbinary], [igbinary.h])
   PHP_NEW_EXTENSION(igbinary, igbinary.c hash_si.c hash_function.c, $ext_shared,, $PHP_IGBINARY_CFLAGS)
