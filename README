@@ -83,27 +83,6 @@ Bugs & Contributions
 To report bugs, or to contribute fixes and improvements send email to
 opensource@dynamoid.com
 
-There is a bug in php with session.serialize_handler
-http://bugs.php.net/bug.php?id=45406
-
-Setting session.serialize_handler to serializator that is registered by dynamically
-loaded extension (extension=igbinary.so in the php.ini) don't work properly.
-
-This happens because session extension reads ini settings at module startup and
-sets internal globals according settings. As igbinary or other serializator is not loaded,
-serializator is set to nothing. On other hand session extension should be always loaded
-before any serializator, because otherwise serializators can't register themself.
-
-Same arragment is with session.save_handler, but save_handler internal global is checked
-to be valid at every request start.
-
-Solution is to apply patch http://phadej.daug.net/php-5.2.6-serialize_handler.patch
-and recompile php, or simpler work around is to use ini_set at very beginning of 
-the source, before session_start():
-
-ini_set('session.serialize_handler', 'igbinary');
-session_start();
-
 Use from other extensions
 -------------------------
 
