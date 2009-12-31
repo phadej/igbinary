@@ -1005,7 +1005,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 	/* custom serializer */
 	if (ce && ce->serialize != NULL) {
 		/* TODO: var_hash? */
-		if(ce->serialize(z, &serialized_data, &serialized_len, (zend_serialize_data *)NULL TSRMLS_CC) == SUCCESS) {
+		if(ce->serialize(z, &serialized_data, &serialized_len, (zend_serialize_data *)NULL TSRMLS_CC) == SUCCESS && !EG(exception)) {
 			igbinary_serialize_object_name(igsd, ce->name, ce->name_length TSRMLS_CC);
 
 			if (serialized_len <= 0xff) {
@@ -1020,12 +1020,21 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 			}
 
 			if (igbinary_serialize_resize(igsd, serialized_len TSRMLS_CC)) {
+				if (serialized_data) {
+					efree(serialized_data);
+				}
+				r = 1;
+
 				return 1;
 			}
 
 			memcpy(igsd->buffer+igsd->buffer_size, serialized_data, serialized_len);
 			igsd->buffer_size += serialized_len;
+		} else if (EG(exception)) {
+			/* exception, return failure */
+			r = 1;
 		} else {
+			/* Serialization callback failed, assume null output */
 			igbinary_serialize_null(igsd TSRMLS_CC);
 		}
 
@@ -1033,7 +1042,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 			efree(serialized_data);
 		}
 
-		return 0;
+		return r;
 	}
 
 	/* serialize class name */
@@ -1620,6 +1629,8 @@ inline static int igbinary_unserialize_object_ser(struct igbinary_unserialize_da
 
 	if (ce->unserialize(z, ce, (const unsigned char*)(igsd->buffer + igsd->buffer_offset), n, NULL TSRMLS_CC) != SUCCESS) {
 		return 1;
+	} else if (EG(exception)) {
+		return 1;
 	}
 
 	igsd->buffer_offset += n;
@@ -1708,6 +1719,11 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 		zval_ptr_dtor(&arg_func_name);
 	} while (0);
 
+	/* previous user function call may have raised an exception */
+	if (EG(exception)) {
+		return 1;
+	}
+
 	object_init_ex(*z, ce);
 
 	/* reference */
@@ -1756,6 +1772,10 @@ inline static int igbinary_unserialize_object(struct igbinary_unserialize_data *
 
 		if (h) {
 			zval_ptr_dtor(&h);
+		}
+
+		if (EG(exception)) {
+			r = 1;
 		}
 	}
 
