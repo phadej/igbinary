@@ -40,7 +40,7 @@ igbinary stores PHP data structures in a compact binary form.
 echo "extension=igbinary.so" > %{buildroot}/%{_sysconfdir}/php.d/igbinary.ini
 
 %clean
-%{__rm} -rf %{buildroot}
+[ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot}
 
 %files
 %{_libdir}/php/modules/igbinary.so
