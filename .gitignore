@@ -50,3 +50,4 @@ tests/*.mem
 tests/*.diff
 tests/*.log
 tests/*.exp
+tmp-php.ini
