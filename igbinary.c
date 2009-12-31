@@ -989,7 +989,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 	zval f;
 	zval *h = NULL;
 
-	int r;
+	int r = 0;
 
 	unsigned char *serialized_data = NULL;
 	zend_uint serialized_len;
@@ -997,7 +997,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 	PHP_CLASS_ATTRIBUTES;
 
 	if (igbinary_serialize_array_ref(igsd, z, true TSRMLS_CC) == 0) {
-		return 0;
+		return r;
 	}
 
 	ce = Z_OBJCE_P(z);
@@ -1025,7 +1025,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 				}
 				r = 1;
 
-				return 1;
+				return r;
 			}
 
 			memcpy(igsd->buffer+igsd->buffer_size, serialized_data, serialized_len);
@@ -1059,6 +1059,8 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 		r = call_user_function_ex(CG(function_table), &z, &f, &h, 0, 0, 1, NULL TSRMLS_CC);
 
 		if (r == SUCCESS && !EG(exception)) {
+			r = 0;
+
 			if (h) {
 				if (Z_TYPE_P(h) == IS_ARRAY) {
 					r = igbinary_serialize_array_sleep(igsd, z, HASH_OF(h), ce, incomplete_class TSRMLS_CC);
@@ -1069,7 +1071,7 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 
 					/* empty array */
 					igbinary_serialize8(igsd, igbinary_type_array8 TSRMLS_CC);
-					igbinary_serialize8(igsd, 0 TSRMLS_CC);
+					r = igbinary_serialize8(igsd, 0 TSRMLS_CC);
 				}
 			}
 		} else {

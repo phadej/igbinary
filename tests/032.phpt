@@ -28,7 +28,7 @@ class Obj {
 		if ($this->a) {
 			throw new Exception("exception in __sleep $c");
 		}
-		return array('a');
+		return array('a', 'b');
 	}
 
 	function __wakeup() {
@@ -77,5 +77,4 @@ try {
 ?>
 --EXPECT--
 exception in __sleep 0
-exception in __wakeup 3
-exception in __sleep 6
+exception in __wakeup 2
