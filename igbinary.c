@@ -265,8 +265,15 @@ int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
 		return 1;
 	}
 
-	igbinary_serialize_header(&igsd TSRMLS_CC);
-	igbinary_serialize_zval(&igsd, z TSRMLS_CC);
+	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	if (igbinary_serialize_zval(&igsd, z TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
 
 	*ret_len = igsd.buffer_size;
 	*ret = (uint8_t *) emalloc(igsd.buffer_size);
