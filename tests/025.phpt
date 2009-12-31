@@ -58,15 +58,15 @@ test('array', $array, true);
  * writing regression tests
  */
 ?>
---EXPECT--
+--EXPECTF--
 array(3) {
   [0]=>
   object(Obj)#1 (4) {
     ["a"]=>
     string(2) "aa"
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     string(2) "bb"
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     string(2) "cc"
     ["d"]=>
     string(2) "dd"
@@ -75,9 +75,9 @@ array(3) {
   object(Obj)#2 (4) {
     ["a"]=>
     string(2) "ee"
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     string(2) "ff"
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     string(2) "gg"
     ["d"]=>
     string(2) "hh"
@@ -86,9 +86,9 @@ array(3) {
   object(Obj)#3 (4) {
     ["a"]=>
     int(1)
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     int(2)
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     int(3)
     ["d"]=>
     int(4)
@@ -99,9 +99,9 @@ array(3) {
   object(Obj)#4 (4) {
     ["a"]=>
     string(2) "aa"
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     string(2) "bb"
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     string(2) "cc"
     ["d"]=>
     NULL
@@ -110,9 +110,9 @@ array(3) {
   object(Obj)#5 (4) {
     ["a"]=>
     string(2) "ee"
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     string(2) "ff"
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     string(2) "gg"
     ["d"]=>
     NULL
@@ -121,9 +121,9 @@ array(3) {
   object(Obj)#6 (4) {
     ["a"]=>
     int(1)
-    ["b:protected"]=>
+    [%r"?b"?:protected"?%r]=>
     int(2)
-    ["c:private"]=>
+    [%r"?c"?:("Obj":)?private"?%r]=>
     int(3)
     ["d"]=>
     NULL
