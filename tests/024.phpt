@@ -1,6 +1,8 @@
 --TEST--
 Recursive objects
 --SKIPIF--
+--INI--
+error_reporting = E_NONE
 --FILE--
 <?php 
 if(!extension_loaded('igbinary')) {
