@@ -20,11 +20,11 @@ test('double -Inf', -INF);
 test('double 0.0', 0.0);
 test('double -0.0', -0.0);
 
---EXPECT--
+--EXPECTF--
 double NaN:
 float(NAN)
 float(NAN)
-0c7ff8000000000000
+%r0c[7f]ff0*[^0]0*%r
 
 double Inf:
 float(INF)
