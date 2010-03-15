@@ -2,7 +2,7 @@
 Profiling perf test.
 --SKIPIF--
 <?php
-	if (!extension_loaded("igbinary")) {
+	if (!extension_loaded("igbinary") || !extension_loaded("mcrypt")) {
 		print "skip";
 	}
 	if (!isset($_ENV['TEST_PERFORMANCE']) || !$_ENV['TEST_PERFORMANCE']) {
