@@ -66,7 +66,7 @@ void hash_si_deinit(struct hash_si *h) {
  * @param key_len Key length.
  * @return index.
  */
-inline size_t _hash_si_find(struct hash_si *h, const char *key, size_t key_len) {
+inline static size_t _hash_si_find(struct hash_si *h, const char *key, size_t key_len) {
 	uint32_t hv;
 	size_t size;
 	
@@ -155,7 +155,7 @@ int hash_si_remove(struct hash_si *h, const char *key, size_t key_len, uint32_t 
 /** Rehash/resize hash_si.
  * @param h Pointer to hash_si struct.
  */
-inline void hash_si_rehash(struct hash_si *h) {
+inline static void hash_si_rehash(struct hash_si *h) {
 	uint32_t hv;
 	int i;
 	struct hash_si newh;

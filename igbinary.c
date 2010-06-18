@@ -218,10 +218,19 @@ PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("igbinary.compact_strings", "1", PHP_INI_ALL, OnUpdateBool, compact_strings, zend_igbinary_globals, igbinary_globals)
 PHP_INI_END()
 /* }}} */
+
+/* {{{ php_igbinary_init_globals */
+static void php_igbinary_init_globals(zend_igbinary_globals *igbinary_globals) {
+	igbinary_globals->compact_strings = 1;
+}
+/* }}} */
+
 /* {{{ PHP_MINIT_FUNCTION */
 PHP_MINIT_FUNCTION(igbinary) {
 	(void) type;
 	(void) module_number;
+	ZEND_INIT_MODULE_GLOBALS(igbinary, php_igbinary_init_globals, NULL);
+
 #if HAVE_PHP_SESSION
 	php_session_register_serializer("igbinary",
 		PS_SERIALIZER_ENCODE_NAME(igbinary),
@@ -236,6 +245,11 @@ PHP_MINIT_FUNCTION(igbinary) {
 PHP_MSHUTDOWN_FUNCTION(igbinary) {
 	(void) type;
 	(void) module_number;
+
+#ifdef ZTS
+	ts_free_id(igbinary_globals_id);
+#endif
+
 	/*
 	 * unregister serializer?
 	 */
