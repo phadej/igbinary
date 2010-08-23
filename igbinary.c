@@ -126,7 +126,8 @@ struct igbinary_unserialize_data {
 	size_t references_count;		/**< Unserialized array/objects count. */
 	size_t references_capacity;		/**< Unserialized array/object array capacity. */
 
-	int error; /**< Error number. Not used. */
+	int error;						/**< Error number. Not used. */
+	smart_str string0_buf;			/**< Temporary buffer for strings */
 };
 /* }}} */
 /* {{{ Serializing functions prototypes */
@@ -1145,6 +1146,8 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 /* {{{ igbinary_unserialize_data_init */
 /** Inits igbinary_unserialize_data_init. */
 inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_data *igsd TSRMLS_DC) {
+	smart_str empty_str = { 0 };
+
 	igsd->buffer = NULL;
 	igsd->buffer_size = 0;
 	igsd->buffer_offset = 0;
@@ -1152,6 +1155,7 @@ inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_dat
 	igsd->strings = NULL;
 	igsd->strings_count = 0;
 	igsd->strings_capacity = 4;
+	igsd->string0_buf = empty_str;
 
 	igsd->error = 0;
 	igsd->references = NULL;
@@ -1175,14 +1179,6 @@ inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_dat
 /* {{{ igbinary_unserialize_data_deinit */
 /** Deinits igbinary_unserialize_data_init. */
 inline static void igbinary_unserialize_data_deinit(struct igbinary_unserialize_data *igsd TSRMLS_DC) {
-	size_t i;
-
-	for (i = 0; i < igsd->strings_count; i++) {
-		if (igsd->strings[i].data != NULL) {
-			efree(igsd->strings[i].data);
-		}
-	}
-
 	if (igsd->strings) {
 		efree(igsd->strings);
 	}
@@ -1190,6 +1186,8 @@ inline static void igbinary_unserialize_data_deinit(struct igbinary_unserialize_
 	if (igsd->references) {
 		efree(igsd->references);
 	}
+
+	smart_str_free(&igsd->string0_buf);
 
 	return;
 }
@@ -1436,7 +1434,7 @@ inline static int igbinary_unserialize_chararray(struct igbinary_unserialize_dat
 		}
 	}
 
-	igsd->strings[igsd->strings_count].data = estrndup((char *) (igsd->buffer + igsd->buffer_offset), l);
+	igsd->strings[igsd->strings_count].data = (char *) (igsd->buffer + igsd->buffer_offset);
 	igsd->strings[igsd->strings_count].len = l;
 
 	igsd->buffer_offset += l;
@@ -1565,8 +1563,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 			case igbinary_type_string16:
 			case igbinary_type_string32:
 				if (igbinary_unserialize_chararray(igsd, key_type, &key, &key_len TSRMLS_CC)) {
-				zval_dtor(*z);
-				ZVAL_NULL(*z);
+					zval_dtor(*z);
+					ZVAL_NULL(*z);
 					return 1;
 				}
 				break;
@@ -1593,12 +1591,17 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 		}
 
 		if (key) {
+			/* Keys must include a terminating null. */
+			/* Ensure buffer starts at the beginning. */
+			igsd->string0_buf.len = 0;
+			smart_str_appendl(&igsd->string0_buf, key, key_len);
+			smart_str_0(&igsd->string0_buf);
 /*
 			if (zend_symtable_find(h, key, key_len + 1, (void **)&old_v) == SUCCESS) {
 				var_push_dtor(var_hash, old_v);
 			}
 */
-			zend_symtable_update(h, key, key_len + 1, &v, sizeof(v), NULL);
+			zend_symtable_update(h, igsd->string0_buf.c, igsd->string0_buf.len + 1, &v, sizeof(v), NULL);
 		} else {
 /*
 			if (zend_hash_index_find(h, key_index, (void **)&old_v) == SUCCESS) {
