@@ -98,6 +98,7 @@ struct igbinary_serialize_data {
 	bool compact_strings;		/**< Check for duplicate strings. */
 	struct hash_si strings;		/**< Hash of already serialized strings. */
 	struct hash_si objects;		/**< Hash of already serialized objects. */
+	int string_count;			/**< Serialized string count, used for back referencing */
 	int error;					/**< Error number. Not used. */
 };
 
@@ -464,6 +465,7 @@ inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *i
 	igsd->buffer = NULL;
 	igsd->buffer_size = 0;
 	igsd->buffer_capacity = 32;
+	igsd->string_count = 0;
 	igsd->error = 0;
 
 	igsd->buffer = (uint8_t *) emalloc(igsd->buffer_capacity);
@@ -669,11 +671,14 @@ inline static int igbinary_serialize_string(struct igbinary_serialize_data *igsd
 
 	if (igsd->scalar || !igsd->compact_strings || hash_si_find(&igsd->strings, s, len, i) == 1) {
 		if (!igsd->scalar && igsd->compact_strings) {
-			t = hash_si_size(&igsd->strings);
-			hash_si_insert(&igsd->strings, s, len, t);
+			hash_si_insert(&igsd->strings, s, len, igsd->string_count);
 		}
 
-		igbinary_serialize_chararray(igsd, s, len TSRMLS_CC);
+		igsd->string_count += 1;
+
+		if (igbinary_serialize_chararray(igsd, s, len TSRMLS_CC) != 0) {
+			return 1;
+		}
 	} else {
 		if (*i <= 0xff) {
 			igbinary_serialize8(igsd, (uint8_t) igbinary_type_string_id8 TSRMLS_CC);
@@ -964,8 +969,8 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 	uint32_t *i = &t;
 
 	if (hash_si_find(&igsd->strings, class_name, name_len, i) == 1) {
-		t = hash_si_size(&igsd->strings);
-		hash_si_insert(&igsd->strings, class_name, name_len, t);
+		hash_si_insert(&igsd->strings, class_name, name_len, igsd->string_count);
+		igsd->string_count += 1;
 
 		if (name_len <= 0xff) {
 			igbinary_serialize8(igsd, (uint8_t) igbinary_type_object8 TSRMLS_CC);
