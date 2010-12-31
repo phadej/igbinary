@@ -2,12 +2,14 @@
 -------------------------------------------------------------------------------
 lookup3.c, by Bob Jenkins, May 2006, Public Domain.
 */
-
-#include <sys/param.h>  /* attempt to define endianness */
-#ifdef linux
-# include <endian.h>    /* attempt to define endianness */
+#ifdef PHP_WIN32
+# include "ig_win32.h"
+#else
+# include <sys/param.h>  /* attempt to define endianness */
+# ifdef linux
+#  include <endian.h>    /* attempt to define endianness */
+# endif
 #endif
-
 #include "hash_function.h"
 
 #define hashsize(n) ((uint32_t)1<<(n))

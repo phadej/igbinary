@@ -6,9 +6,11 @@
 
 #ifndef IGBINARY_H
 #define IGBINARY_H
-
-#include <stdint.h>
-
+#ifdef PHP_WIN32
+# include "ig_win32.h"
+#else
+# include <stdint.h>
+#endif
 #include "php.h"
 
 #define IGBINARY_VERSION "1.0.2"

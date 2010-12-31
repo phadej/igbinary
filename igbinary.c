@@ -8,6 +8,10 @@
 #include "config.h"
 #endif
 
+#ifdef PHP_WIN32
+# include "ig_win32.h"
+#endif
+
 #include "php.h"
 #include "php_ini.h"
 #include "zend_dynamic_array.h"
@@ -21,11 +25,14 @@
 
 #include <assert.h>
 
-#include <inttypes.h>
-#include <stdbool.h>
-#include <stddef.h>
-#include <stdint.h>
+#ifndef PHP_WIN32
+# include <inttypes.h>
+# include <stdbool.h>
+# include <stdint.h>
+#endif
 
+
+#include <stddef.h>
 #include "hash.h"
 
 /** Session serializer function prototypes. */
@@ -326,12 +333,12 @@ int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC)
 /* }}} */
 /* {{{ proto string igbinary_unserialize(mixed value) */
 PHP_FUNCTION(igbinary_unserialize) {
+	char *string;
+	int string_len;
+
 	(void) return_value_ptr;
 	(void) this_ptr;
 	(void) return_value_used;
-
-	char *string;
-	int string_len;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &string, &string_len) == FAILURE) {
 		RETURN_NULL();
@@ -348,12 +355,13 @@ PHP_FUNCTION(igbinary_unserialize) {
 /* }}} */
 /* {{{ proto mixed igbinary_serialize(string value) */
 PHP_FUNCTION(igbinary_serialize) {
+	zval *z;
+	struct igbinary_serialize_data igsd;
+
 	(void) return_value_ptr;
 	(void) this_ptr;
 	(void) return_value_used;
 
-	zval *z;
-	struct igbinary_serialize_data igsd;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z) == FAILURE) {
 		RETURN_NULL();
@@ -642,12 +650,12 @@ inline static int igbinary_serialize_long(struct igbinary_serialize_data *igsd, 
 /* {{{ igbinary_serialize_double */
 /** Serializes double. */
 inline static int igbinary_serialize_double(struct igbinary_serialize_data *igsd, double d TSRMLS_DC) {
-	igbinary_serialize8(igsd, igbinary_type_double TSRMLS_CC);
-
 	union {
 		double d;
 		uint64_t u;
 	} u;
+
+	igbinary_serialize8(igsd, igbinary_type_double TSRMLS_CC);
 
 	u.d = d;
 
@@ -1331,6 +1339,11 @@ inline static int igbinary_unserialize_long(struct igbinary_unserialize_data *ig
 /* {{{ igbinary_unserialize_double */
 /** Unserializes double. */
 inline static int igbinary_unserialize_double(struct igbinary_unserialize_data *igsd, enum igbinary_type t, double *ret TSRMLS_DC) {
+	union {
+		double d;
+		uint64_t u;
+	} u;
+
 	(void) t;
 
 	if (igsd->buffer_offset + 8 > igsd->buffer_size) {
@@ -1338,10 +1351,6 @@ inline static int igbinary_unserialize_double(struct igbinary_unserialize_data *
 		return 1;
 	}
 
-	union {
-		double d;
-		uint64_t u;
-	} u;
 
 	u.u = igbinary_unserialize64(igsd TSRMLS_CC);
 
@@ -1498,7 +1507,7 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 
 	// n cannot be larger than the number of minimum "objects" in the array
 	if (n > igsd->buffer_size - igsd->buffer_offset) {
-		zend_error(E_WARNING, "%s: data size %zu smaller that requested array length %zu.", __func__, igsd->buffer_size - igsd->buffer_offset, n);
+		zend_error(E_WARNING, "%s: data size %zu smaller that requested array length %zu.", "igbinary_unserialize_array", igsd->buffer_size - igsd->buffer_offset, n);
 		return 1;
 	}
 
