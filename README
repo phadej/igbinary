@@ -1,66 +1,78 @@
 igbinary
 ========
 
-What it is?
------------
-
 Igbinary is a drop in replacement for the standard php serializer. Instead of
 time and space consuming textual representation, igbinary stores php data
 structures in a compact binary form. Savings are significant when using
-memcached or similar memory based storages for serialized data.
+memcached or similar memory based storages for serialized data. You can
+expect about 50% reduction in storage requirement and speed is at least on par
+with the standard PHP serializer. Specific numbers depend on your data, of
+course.
 
 But where does the name "igbinary" come from? There was once a similar project
-called fbinary but it has disappeared from the Internet. Its architecture
-wasn't very clean either. IG is an abbreviation for a finnish social networking
-site IRC-Galleria (http://irc-galleria.net/)
+called fbinary but it has disappeared from the Internet a long time ago. Its
+architecture wasn't particularly clean either. IG is an abbreviation for a
+finnish social networking site IRC-Galleria (http://irc-galleria.net/)
 
-Supports:
-- PHP5 (tested with 5.2.4 and 5.2.5)
-- Same data types as the standard php serializer:
-  null, bool, int, float, string, array and objects.
-- __autoload & unserialize_callback_func
-- __sleep & __wakeup
+Features
+--------
+
+- Supports same data types as the standard PHP serializer: null, bool, int,
+  float, string, array and objects.
+- ``__autoload`` & ``unserialize_callback_func``
+- ``__sleep`` & ``__wakeup``
 - Serializable -interface
 - Data portability between platforms (32/64bit, endianess)
-- Tested on Linux amd64, Mac OSX x86 and NetBSD sparc64
+- Tested on Linux amd64, Mac OSX x86, HP-UX PA-RISC and NetBSD sparc64
+- Compatible with PHP5 (tested with 5.2.4 and 5.2.5)
 
-Why to use
-----------
+Implementation details
+----------------------
 
-Storing complex php data structures like arrays of associative arrays in
-serialized form is not very space efficient. Igbinary uses two strategies to
-minimize size of the serialized form.
+Storing complex PHP data structures like arrays of associative arrays
+with the standard PHP serializer is not very space efficient. The main
+reasons in order of significance are (at least in our applications):
 
-Strings are stored only once by using a hash table. Arrays of associate arrays
-with very verbose keys are stored very compactly.
+1. Array keys are repeated redundantly. 
+2. Numerical values are plain text.
+3. Human readability adds some overhead.
 
-Numerical values are stored in the smallest primitive data type available.
-123 = int8_t
-1234 = int16_t
-123456 = int32_t
-... and so on.
+Igbinary uses two specific strategies to minimize the size of the serialized
+output.
+
+1. Strings are stored only once by using a hash table. Arrays of associate
+   arrays with very verbose keys are stored very compactly.
+
+2. Numerical values are stored in the smallest primitive data type
+   available:
+   *123* = ``int8_t``,
+   *1234* = ``int16_t``,
+   *123456* = ``int32_t``
+   ... and so on.
+
+3. Well, it is not human readable ;)
 
 How to use
 ----------
 
 Add the following lines to your php.ini:
 
-# Load igbinary extension
-extension=igbinary.so
+  # Load igbinary extension
+  extension=igbinary.so
 
-# Use igbinary as session serializer
-session.serialize_handler=igbinary
+  # Use igbinary as session serializer
+  session.serialize_handler=igbinary
 
 .. and in your php code replace serialize and unserialize function calls
-with igbinary_serialize and igbinary_unserialize.
+with ``igbinary_serialize`` and ``igbinary_unserialize``.
 
 Installing
 ----------
 
 Note:
 Sometimes you may have to substitute phpize with phpize5.
-is such cases you will probably want to add "--with-php-config=.../php-config5" as
-an option to configure.
+In such cases you probably should add "--with-php-config=.../php-config5" as
+an option to configure script.
 
 Compiling:
 
@@ -80,16 +92,19 @@ If you use ICC (Intel C Compiler)
 Bugs & Contributions
 --------------------
 
-To report bugs, or to contribute fixes and improvements send email to
+To report bugs or to contribute fixes and improvements send email to
 opensource@dynamoid.com
 
-Use from other extensions
--------------------------
+You can also fork at GitHub: http://github.com/dynamoid/igbinary
 
-If you are writing own extension and it is possible to use igbinary.
-Igbinary installs own header igbinary.h to the ext/igbinary/igbinary.h.
-There are just two straighforward functions: igbinary_serialize and igbinary_unserialize.
-Look at the igbinary.h for prototypes and more information.
+Utilizing in other extensions
+-----------------------------
 
-Use PHP_ADD_EXTENSION_DEP(yourextension, igbinary) in config.m4 if someone wants
-compile both of them statically into php.
+You can call igbinary from other extensions fairly easily. Igbinary installs its
+header file to ext/igbinary/igbinary.h. There are just two straighforward
+functions: igbinary_serialize and igbinary_unserialize. Look at igbinary.h for
+prototypes and usage.
+
+Add PHP_ADD_EXTENSION_DEP(yourextension, igbinary) to your config.m4 in case
+someone wants to compile both of them statically into php.
+
