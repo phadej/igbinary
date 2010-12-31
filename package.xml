@@ -34,6 +34,8 @@ http://pear.php.net/dtd/package-2.0.xsd">
   <contents>
     <dir name="/">
       <file name="config.m4" role="src" />
+      <file name="config.w32" role="src" />
+
       <file name="hash.h" role="src" />
       <file name="hash_function.c" role="src" />
       <file name="hash_function.h" role="src" />
@@ -41,6 +43,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <file name="igbinary.c" role="src" />
       <file name="igbinary.h" role="src" />
       <file name="php_igbinary.h" role="src" />
+      <file name="ig_win32.h" role="src" />
 
       <file name="igbinary.php" role="doc" />
       <file name="igbinary.php.ini" role="doc" />
