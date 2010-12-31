@@ -6,9 +6,11 @@
 
 #ifndef HASH_FUNCTION_H
 #define HASH_FUNCTION_H
-
-#include <stdint.h>     /* defines uint32_t etc */
-
+#ifdef PHP_WIN32
+# include "ig_win32.h"
+#else
+# include <stdint.h>     /* defines uint32_t etc */
+#endif
 /**
  * Hash function
  *

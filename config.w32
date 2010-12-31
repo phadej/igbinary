@@ -1,0 +1,10 @@
+// $Id$
+// vim:ft=javascript
+
+ARG_ENABLE("igbinary", "whether to enable igbinary support", "no");
+
+if (PHP_IGBINARY == "yes") {
+	EXTENSION("igbinary", "igbinary.c hash_si.c hash_function.c");
+	AC_DEFINE('HAVE_IGBINARY', 1, 'Have igbinary support', false);
+	ADD_EXTENSION_DEP('igbinary', 'session');
+}

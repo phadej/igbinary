@@ -8,7 +8,13 @@
 #define HASH_H
 
 #include <assert.h>
-#include <stdint.h>
+
+#ifdef PHP_WIN32
+# include "ig_win32.h"
+#else
+# include <stdint.h>     /* defines uint32_t etc */
+#endif
+
 #include <stddef.h>
 
 /** Key/value pair of hash_si.
