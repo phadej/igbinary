@@ -48,7 +48,7 @@ int hash_si_init(struct hash_si *h, size_t size) {
 /* }}} */
 /* {{{ hash_si_deinit */
 void hash_si_deinit(struct hash_si *h) {
-	int i;
+	size_t i;
 	
 	for (i = 0; i < h->size; i++) {
 		if (h->data[i].key != NULL) {
@@ -160,7 +160,7 @@ int hash_si_remove(struct hash_si *h, const char *key, size_t key_len, uint32_t 
  */
 inline static void hash_si_rehash(struct hash_si *h) {
 	uint32_t hv;
-	int i;
+	size_t i;
 	struct hash_si newh;
 		
 	assert(h != NULL);
@@ -228,7 +228,7 @@ int hash_si_find(struct hash_si *h, const char *key, size_t key_len, uint32_t *v
 /* }}} */
 /* {{{ hash_si_traverse */
 void hash_si_traverse(struct hash_si *h, int (*traverse_function) (const char *key, size_t key_len, uint32_t value)) {
-	int i;
+	size_t i;
 
 	assert(h != NULL && traverse_function != NULL);
 	
