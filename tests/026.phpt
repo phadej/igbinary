@@ -16,8 +16,7 @@ function test($type, $variable, $test) {
 
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo $test || $unserialized == $variable ? 'OK' : 'ERROR';
-	echo "\n";
+	echo !$test || $unserialized == $variable ? 'OK' : 'ERROR', "\n";
 }
 
 $a = array(
@@ -29,96 +28,36 @@ $a = array(
 
 $a['f'] = &$a;
 
-test('array', $a, true);
+test('array', $a, false);
 
 $a = array("foo" => &$b);
 $b = array(1, 2, $a);
-var_dump($a);
-//var_dump(unserialize(serialize($a)));
-var_dump($k = igbinary_unserialize(igbinary_serialize($a)));
 
-$k["foo"][1] = "b";
-var_dump($k);
+$exp = $a;
+$act = igbinary_unserialize(igbinary_serialize($a));
 
-/*
- * you can add regression tests for your extension here
- *
- * the output of your test code has to be equal to the
- * text in the --EXPECT-- section below for the tests
- * to pass, differences between the output and the
- * expected text are interpreted as failure
- *
- * see php5/README.TESTING for further information on
- * writing regression tests
- */
+$dump_exp = print_r($exp, true);
+$dump_act = print_r($act, true);
+
+if ($dump_act !== $dump_exp) {
+	echo "Var dump differs:\n", $dump_act, "\n", $dump_exp, "\n";
+} else {
+	echo "Var dump OK\n";
+}
+
+$act['foo'][1] = 'test value';
+$exp['foo'][1] = 'test value';
+if ($act['foo'][1] !== $act['foo'][2]['foo'][1]) {
+	echo "Recursive elements differ:\n";
+	var_dump($act);
+	var_dump($act['foo']);
+	var_dump($exp);
+	var_dump($exp['foo']);
+}
+
 ?>
 --EXPECT--
 array
 140211016114021101621101631101641101651101662514020e0001010e05250102
 OK
-array(1) {
-  ["foo"]=>
-  &array(3) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    array(1) {
-      ["foo"]=>
-      &array(3) {
-        [0]=>
-        int(1)
-        [1]=>
-        int(2)
-        [2]=>
-        *RECURSION*
-      }
-    }
-  }
-}
-array(1) {
-  ["foo"]=>
-  &array(3) {
-    [0]=>
-    int(1)
-    [1]=>
-    int(2)
-    [2]=>
-    array(1) {
-      ["foo"]=>
-      &array(3) {
-        [0]=>
-        int(1)
-        [1]=>
-        int(2)
-        [2]=>
-        *RECURSION*
-      }
-    }
-  }
-}
-array(1) {
-  ["foo"]=>
-  &array(3) {
-    [0]=>
-    int(1)
-    [1]=>
-    string(1) "b"
-    [2]=>
-    array(1) {
-      ["foo"]=>
-      &array(3) {
-        [0]=>
-        int(1)
-        [1]=>
-        string(1) "b"
-        [2]=>
-        array(1) {
-          ["foo"]=>
-          *RECURSION*
-        }
-      }
-    }
-  }
-}
+Var dump OK
