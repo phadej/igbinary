@@ -2,20 +2,20 @@
 Profiling perf test.
 --SKIPIF--
 <?php
-	if (!extension_loaded("igbinary") || !extension_loaded("mcrypt")) {
-		print "skip";
+	if (!extension_loaded("igbinary")) {
+		print "skip no igbinary";
 	}
 	if (!isset($_ENV['TEST_PERFORMANCE']) || !$_ENV['TEST_PERFORMANCE']) {
 		echo "skip set TEST_PERFORMANCE=1 environment to enable trivial performance test";
 	}
-?>
 --INI--
 igbinary.compact_strings=Off
 --FILE--
 <?php
+$t = time();
 $data_array = array();
 for ($i = 0; $i < 5000; $i++) {
-	$data_array[mcrypt_create_iv(10, MCRYPT_DEV_URANDOM)] = mcrypt_create_iv(10, MCRYPT_DEV_URANDOM);
+	$data_array[md5($i)] = md5($i . $t);
 }
 
 $time_start = microtime(true);

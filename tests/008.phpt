@@ -13,7 +13,14 @@ function test($type, $variable) {
 
 	echo $type, "\n";
 	echo substr(bin2hex($serialized), 8), "\n";
-	echo $unserialized == $variable ? 'OK' : 'ERROR';
+	if ($unserialized != $variable) {
+		echo 'ERROR, expected: ';
+		var_dump($variable);
+		echo 'got: ';
+		var_dump($unserialized);
+	} else {
+		echo 'OK';
+	}
 	echo "\n";
 }
 
@@ -22,17 +29,6 @@ test('array("one" => 1, "two" => 2))', array("one" => 1, "two" => 2));
 test('array("kek" => "lol", "lol" => "kek")', array("kek" => "lol", "lol" => "kek"));
 test('array("" => "empty")', array("" => "empty"));
 
-/*
- * you can add regression tests for your extension here
- *
- * the output of your test code has to be equal to the
- * text in the --EXPECT-- section below for the tests
- * to pass, differences between the output and the
- * expected text are interpreted as failure
- *
- * see php5/README.TESTING for further information on
- * writing regression tests
- */
 ?>
 --EXPECT--
 array("foo", "foo", "foo")
