@@ -1216,12 +1216,13 @@ inline static int igbinary_unserialize_header(struct igbinary_unserialize_data *
 
 	version = igbinary_unserialize32(igsd TSRMLS_CC);
 
-	if (version != IGBINARY_FORMAT_VERSION) {
-		zend_error(E_WARNING, "igbinary_unserialize_header: version mismatch: %u vs %u", (unsigned int) version, (unsigned int) IGBINARY_FORMAT_VERSION);
+	/* Support older version 1 and the current format 2 */
+	if (version == IGBINARY_FORMAT_VERSION || version == 0x00000001) {
+		return 0;
+	} else {
+		zend_error(E_WARNING, "igbinary_unserialize_header: unsupported version: %u, should be %u or %u", (unsigned int) version, 0x00000001, (unsigned int) IGBINARY_FORMAT_VERSION);
 		return 1;
 	}
-
-	return 0;
 }
 /* }}} */
 /* {{{ igbinary_unserialize8 */
