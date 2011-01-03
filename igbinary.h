@@ -1,7 +1,5 @@
 /*
  * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- *
- * $Id: igbinary.h,v 1.5 2008/07/03 16:43:46 phadej Exp $
  */
 
 #ifndef IGBINARY_H

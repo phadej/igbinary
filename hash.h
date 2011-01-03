@@ -1,7 +1,5 @@
 /*
  * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- *
- * $Id: hash.h,v 1.5 2008/07/01 17:02:18 phadej Exp $
  */
 
 #ifndef HASH_H

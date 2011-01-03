@@ -1,7 +1,5 @@
 /*
  * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- *
- * $Id: igbinary.c,v 1.33 2009/03/18 06:44:13 tricky Exp $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -273,7 +271,6 @@ PHP_MINFO_FUNCTION(igbinary) {
 	php_info_print_table_start();
 	php_info_print_table_row(2, "igbinary support", "enabled");
 	php_info_print_table_row(2, "igbinary version", IGBINARY_VERSION);
-	php_info_print_table_row(2, "igbinary revision", "$Id: igbinary.c,v 1.33 2009/03/18 06:44:13 tricky Exp $");
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();

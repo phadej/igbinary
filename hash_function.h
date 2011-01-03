@@ -1,7 +1,5 @@
 /*
  * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- *
- * $Id: hash_function.h,v 1.4 2008/07/01 17:02:18 phadej Exp $
  */
 
 #ifndef HASH_FUNCTION_H

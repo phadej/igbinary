@@ -1,7 +1,5 @@
 /*
  * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- *
- * $Id: hash_si.c,v 1.5 2008/07/01 17:02:18 phadej Exp $
  */
 #ifdef PHP_WIN32
 # include "ig_win32.h"

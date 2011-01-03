@@ -1,4 +1,3 @@
-dnl $Id: config.m4,v 1.7 2008/07/03 17:05:57 phadej Exp $
 dnl config.m4 for extension igbinary
 
 dnl Comments in this file start with the string 'dnl'.
