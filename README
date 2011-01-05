@@ -4,15 +4,10 @@ igbinary
 Igbinary is a drop in replacement for the standard php serializer. Instead of
 time and space consuming textual representation, igbinary stores php data
 structures in a compact binary form. Savings are significant when using
-memcached or similar memory based storages for serialized data. You can
-expect about 50% reduction in storage requirement and speed is at least on par
-with the standard PHP serializer. Specific numbers depend on your data, of
-course.
-
-But where does the name "igbinary" come from? There was once a similar project
-called fbinary but it has disappeared from the Internet a long time ago. Its
-architecture wasn't particularly clean either. IG is an abbreviation for a
-finnish social networking site IRC-Galleria (http://irc-galleria.net/)
+memcached or similar memory based storages for serialized data. About 50%
+reduction in storage requirement can be expected. Specific number depends on
+your data. (Un)serialization performance is at least on par with the standard
+PHP serializer.
 
 Features
 --------
@@ -70,41 +65,50 @@ Installing
 ----------
 
 Note:
-Sometimes you may have to substitute phpize with phpize5.
-In such cases you probably should add "--with-php-config=.../php-config5" as
-an option to configure script.
+Sometimes phpize must be substituted with phpize5. In such cases the following
+option must be given to configure script: "--with-php-config=.../php-config5" 
 
 Compiling:
 
 1. phpize
 
-If you use GCC:
+With GCC:
 2. ./configure CFLAGS="-O2 -g" --enable-igbinary
 
-If you use ICC (Intel C Compiler)
+With ICC (Intel C Compiler)
 2. ./configure CFLAGS=" -no-prec-div -O3 -xO -unroll2 -g" CC=icc --enable-igbinary
 
 3. make
-4. ( make test)
+4. ( make test )
 5. make install
-6. igbinary.so is installed in the default extensions directory
+6. igbinary.so is installed to the default extension directory
 
 Bugs & Contributions
 --------------------
 
-To report bugs or to contribute fixes and improvements send email to
-opensource@dynamoid.com
+Mailing list for bug reports and other development discussion can be found
+at http://groups.google.com/group/igbinary
 
-You can also fork at GitHub: http://github.com/dynamoid/igbinary
+The preferred ways for contributions are pull requests and email patches
+(in git format). Feel free to fork at http://github.com/dynamoid/igbinary
 
 Utilizing in other extensions
 -----------------------------
 
-You can call igbinary from other extensions fairly easily. Igbinary installs its
-header file to ext/igbinary/igbinary.h. There are just two straighforward
+Igbinary can be called from other extensions fairly easily. Igbinary installs
+its header file to ext/igbinary/igbinary.h. There are just two straighforward
 functions: igbinary_serialize and igbinary_unserialize. Look at igbinary.h for
 prototypes and usage.
 
 Add PHP_ADD_EXTENSION_DEP(yourextension, igbinary) to your config.m4 in case
 someone wants to compile both of them statically into php.
+
+Trivia
+------
+
+Where does the name "igbinary" come from? There was once a similar project
+called fbinary but it has disappeared from the Internet a long time ago. Its
+architecture wasn't particularly clean either. IG is an abbreviation for a
+finnish social networking site IRC-Galleria (http://irc-galleria.net/)
+
 
