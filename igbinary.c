@@ -197,8 +197,8 @@ ZEND_END_ARG_INFO()
 /* {{{ igbinary_functions[] */
 /** Exported php functions. */
 zend_function_entry igbinary_functions[] = {
-	PHP_FE(igbinary_serialize,                NULL)
-	PHP_FE(igbinary_unserialize,              NULL)
+	PHP_FE(igbinary_serialize,                arginfo_igbinary_serialize)
+	PHP_FE(igbinary_unserialize,              arginfo_igbinary_unserialize)
 	{NULL, NULL, NULL}
 };
 /* }}} */
