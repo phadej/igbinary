@@ -185,6 +185,15 @@ inline static int igbinary_unserialize_ref(struct igbinary_unserialize_data *igs
 
 static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zval **z TSRMLS_DC);
 /* }}} */
+/* {{{ arginfo */
+ZEND_BEGIN_ARG_INFO_EX(arginfo_igbinary_serialize, 0, 0, 1)
+	ZEND_ARG_INFO(0, value)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_igbinary_unserialize, 0, 0, 1)
+	ZEND_ARG_INFO(0, str)
+ZEND_END_ARG_INFO()
+/* }}} */
 /* {{{ igbinary_functions[] */
 /** Exported php functions. */
 zend_function_entry igbinary_functions[] = {
