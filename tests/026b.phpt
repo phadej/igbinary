@@ -7,6 +7,11 @@ report_memleaks=0
 if(!extension_loaded('igbinary')) {
 	echo "skip no igbinary";
 }
+
+if (version_compare(PHP_VERSION, "5.2.16", "<")) {
+	echo "skip only test on php version 5.2.16 and above
+}
+
 --FILE--
 <?php
 
