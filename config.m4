@@ -20,6 +20,15 @@ if test "$PHP_IGBINARY" != "no"; then
   AC_CHECK_HEADERS([stddef.h],, AC_MSG_ERROR([stddef.h not exists]))
   AC_CHECK_HEADERS([stdint.h],, AC_MSG_ERROR([stdint.h not exists]))
 
+  AC_MSG_CHECKING([for apc includes])
+  if test -f "$phpincludedir/ext/apc/apc_serializer.h"; then
+      apc_inc_path="$phpincludedir"
+      AC_MSG_RESULT([$apc_inc_path])
+      AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+  else
+      AC_MSG_RESULT([not found])
+  fi
+
   AC_CHECK_SIZEOF([long])
 
   dnl GCC
