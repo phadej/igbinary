@@ -22,6 +22,9 @@
 #include "ext/standard/info.h"
 #include "ext/session/php_session.h"
 #include "ext/standard/php_incomplete_class.h"
+#ifdef HAVE_APC_SUPPORT
+# include "ext/apc/apc_serializer.h"
+#endif
 #include "php_igbinary.h"
 
 #include "igbinary.h"
@@ -40,6 +43,12 @@
 
 /** Session serializer function prototypes. */
 PS_SERIALIZER_FUNCS(igbinary);
+
+#ifdef HAVE_APC_SUPPORT
+/** Apc serializer function prototypes */
+static int APC_SERIALIZER_NAME(igbinary) (APC_SERIALIZER_ARGS);
+static int APC_UNSERIALIZER_NAME(igbinary) (APC_UNSERIALIZER_ARGS);
+#endif
 
 /* {{{ Types */
 enum igbinary_type {
@@ -257,6 +266,14 @@ PHP_MINIT_FUNCTION(igbinary) {
 		PS_SERIALIZER_ENCODE_NAME(igbinary),
 		PS_SERIALIZER_DECODE_NAME(igbinary));
 #endif
+
+#if HAVE_APC_SUPPORT
+	apc_register_serializer("igbinary",
+		APC_SERIALIZER_NAME(igbinary),
+		APC_UNSERIALIZER_NAME(igbinary),
+		NULL TSRMLS_CC);
+#endif
+
 	REGISTER_INI_ENTRIES();
 
 	return SUCCESS;
@@ -497,6 +514,29 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	return SUCCESS;
 }
 /* }}} */
+#ifdef HAVE_APC_SUPPORT
+/* {{{ apc_serialize function */
+static int APC_SERIALIZER_NAME(igbinary) ( APC_SERIALIZER_ARGS ) {
+	if (igbinary_serialize(buf, buf_len, value) == 0) {
+		/* flipped semantics */
+		return 1;
+	}
+	return 0;
+}
+/* }}} */
+
+/* {{{ apc_unserialize function */
+static int APC_UNSERIALIZER_NAME(igbinary) ( APC_UNSERIALIZER_ARGS ) {
+	if (igbinary_unserialize(buf, buf_len, value) == 0) {
+		/* flipped semantics */
+		return 1;
+	}
+	zval_dtor(*value);
+	(*value)->type = IS_NULL;
+	return 0;
+}
+/* }}} */
+#endif
 /* {{{ igbinary_serialize_data_init */
 /** Inits igbinary_serialize_data. */
 inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *igsd, bool scalar TSRMLS_DC) {
