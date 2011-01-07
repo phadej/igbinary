@@ -1,6 +1,12 @@
 /*
- * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- */
+  +----------------------------------------------------------------------+
+  | See COPYING file for further copyright information                   |
+  +----------------------------------------------------------------------+ 
+  | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
+  | See CREDITS for contributors                                         |
+  +----------------------------------------------------------------------+ 
+*/
+
 #ifdef PHP_WIN32
 # include "ig_win32.h"
 #endif
