@@ -482,7 +482,7 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 #ifdef HAVE_APC_SUPPORT
 /* {{{ apc_serialize function */
 static int APC_SERIALIZER_NAME(igbinary) ( APC_SERIALIZER_ARGS ) {
-	if (igbinary_serialize(buf, buf_len, value) == 0) {
+	if (igbinary_serialize(buf, buf_len, (zval*)value) == 0) {
 		/* flipped semantics */
 		return 1;
 	}
