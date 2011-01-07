@@ -378,8 +378,16 @@ PHP_FUNCTION(igbinary_serialize) {
 		RETURN_NULL();
 	}
 
-	igbinary_serialize_header(&igsd TSRMLS_CC);
-	igbinary_serialize_zval(&igsd, z TSRMLS_CC);
+	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
+		zend_error(E_WARNING, "igbinary_serialize: cannot write header");
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		RETURN_NULL();
+	}
+
+	if (igbinary_serialize_zval(&igsd, z TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		RETURN_NULL();
+	}
 
 	RETVAL_STRINGL((char *)igsd.buffer, igsd.buffer_size, 1);
 
@@ -390,21 +398,32 @@ PHP_FUNCTION(igbinary_serialize) {
 PS_SERIALIZER_ENCODE_FUNC(igbinary)
 {
 	struct igbinary_serialize_data igsd;
+	char *s;
 
 	if (igbinary_serialize_data_init(&igsd, false TSRMLS_CC)) {
 		zend_error(E_WARNING, "igbinary_serialize: cannot init igsd");
 		return FAILURE;
 	}
 
-	igbinary_serialize_header(&igsd TSRMLS_CC);
-	igbinary_serialize_array(&igsd, PS(http_session_vars), false, false TSRMLS_CC);
-
-	if (newlen)
-		*newlen = igsd.buffer_size;
-
-	*newstr = estrndup((char*)igsd.buffer, igsd.buffer_size);
-	if (newstr == NULL) {
+	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
+		zend_error(E_WARNING, "igbinary_serailize: cannot write header");
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
 		return FAILURE;
+	}
+
+	if (igbinary_serialize_array(&igsd, PS(http_session_vars), false, false TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return FAILURE;
+	}
+
+	s = estrndup((char*)igsd.buffer, igsd.buffer_size);
+	if (s == NULL) {
+		return FAILURE;
+	}
+
+	*newstr = s;
+	if (newlen) {
+		*newlen = igsd.buffer_size;
 	}
 
 	igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
@@ -428,7 +447,9 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	if (!val || vallen==0)
 		return SUCCESS;
 
-	igbinary_unserialize_data_init(&igsd TSRMLS_CC);
+	if (igbinary_unserialize_data_init(&igsd TSRMLS_CC) != 0) {
+		return FAILURE;
+	}
 
 	igsd.buffer = (uint8_t *)val;
 	igsd.buffer_size = vallen;
@@ -514,9 +535,7 @@ inline static void igbinary_serialize_data_deinit(struct igbinary_serialize_data
 /* {{{ igbinary_serialize_header */
 /** Serializes header. */
 inline static int igbinary_serialize_header(struct igbinary_serialize_data *igsd TSRMLS_DC) {
-	igbinary_serialize32(igsd, IGBINARY_FORMAT_VERSION TSRMLS_CC); /* version */
-
-	return 0;
+	return igbinary_serialize32(igsd, IGBINARY_FORMAT_VERSION TSRMLS_CC); /* version */
 }
 /* }}} */
 /* {{{ igbinary_serialize_resize */
