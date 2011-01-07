@@ -46,86 +46,75 @@ $array = array(
 
 test('array', $array, true);
 
-/*
- * you can add regression tests for your extension here
- *
- * the output of your test code has to be equal to the
- * text in the --EXPECT-- section below for the tests
- * to pass, differences between the output and the
- * expected text are interpreted as failure
- *
- * see php5/README.TESTING for further information on
- * writing regression tests
- */
 ?>
---EXPECTF--
-array(3) {
-  [0]=>
-  object(Obj)#1 (4) {
-    ["a"]=>
-    string(2) "aa"
-    [%r"?b"?:protected"?%r]=>
-    string(2) "bb"
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    string(2) "cc"
-    ["d"]=>
-    string(2) "dd"
+--EXPECTREGEX--
+array\(3\) {
+  \[0\]=>
+  object\(Obj\)#1 \(4\) {
+    \["a"\]=>
+    string\(2\) "aa"
+    \[("b":protected|"b:protected")\]=>
+    string\(2\) "bb"
+    \["?c"?:("Obj":)?private"?\]=>
+    string\(2\) "cc"
+    \["d"\]=>
+    string\(2\) "dd"
   }
-  [1]=>
-  object(Obj)#2 (4) {
-    ["a"]=>
-    string(2) "ee"
-    [%r"?b"?:protected"?%r]=>
-    string(2) "ff"
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    string(2) "gg"
-    ["d"]=>
-    string(2) "hh"
+  \[1\]=>
+  object\(Obj\)#2 \(4\) {
+    \["a"\]=>
+    string\(2\) "ee"
+    \["?b"?:protected"?\]=>
+    string\(2\) "ff"
+    \["?c"?:("Obj":)?private"?\]=>
+    string\(2\) "gg"
+    \["d"\]=>
+    string\(2\) "hh"
   }
-  [2]=>
-  object(Obj)#3 (4) {
-    ["a"]=>
-    int(1)
-    [%r"?b"?:protected"?%r]=>
-    int(2)
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    int(3)
-    ["d"]=>
-    int(4)
+  \[2\]=>
+  object\(Obj\)#3 \(4\) {
+    \["a"\]=>
+    int\(1\)
+    \["?b"?:protected"?\]=>
+    int\(2\)
+    \["?c"?:("Obj":)?private"?\]=>
+    int\(3\)
+    \["d"\]=>
+    int\(4\)
   }
 }
-array(3) {
-  [0]=>
-  object(Obj)#4 (4) {
-    ["a"]=>
-    string(2) "aa"
-    [%r"?b"?:protected"?%r]=>
-    string(2) "bb"
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    string(2) "cc"
-    ["d"]=>
+array\(3\) {
+  \[0\]=>
+  object\(Obj\)#4 \(4\) {
+    \["a"\]=>
+    string\(2\) "aa"
+    \["?b"?:protected"?\]=>
+    string\(2\) "bb"
+    \["?c"?:("Obj":)?private"?\]=>
+    string\(2\) "cc"
+    \["d"\]=>
     NULL
   }
-  [1]=>
-  object(Obj)#5 (4) {
-    ["a"]=>
-    string(2) "ee"
-    [%r"?b"?:protected"?%r]=>
-    string(2) "ff"
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    string(2) "gg"
-    ["d"]=>
+  \[1\]=>
+  object\(Obj\)#5 \(4\) {
+    \["a"\]=>
+    string\(2\) "ee"
+    \["?b"?:protected"?\]=>
+    string\(2\) "ff"
+    \["?c"?:("Obj":)?private"?\]=>
+    string\(2\) "gg"
+    \["d"\]=>
     NULL
   }
-  [2]=>
-  object(Obj)#6 (4) {
-    ["a"]=>
-    int(1)
-    [%r"?b"?:protected"?%r]=>
-    int(2)
-    [%r"?c"?:("Obj":)?private"?%r]=>
-    int(3)
-    ["d"]=>
+  \[2\]=>
+  object\(Obj\)#6 \(4\) {
+    \["a"\]=>
+    int\(1\)
+    \["?b"?:protected"?\]=>
+    int\(2\)
+    \["?c"?:("Obj":)?private"?\]=>
+    int\(3\)
+    \["d"\]=>
     NULL
   }
 }
