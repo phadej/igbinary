@@ -2,7 +2,7 @@
 Unserialize backwards compatible with v1.
 --SKIPIF--
 --FILE--
-<?
+<?php
 $data = array(
 	array(
 		'var' => 'b:1;',
