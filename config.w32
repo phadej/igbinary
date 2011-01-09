@@ -4,7 +4,9 @@
 ARG_ENABLE("igbinary", "whether to enable igbinary support", "no");
 
 if (PHP_IGBINARY == "yes") {
-	EXTENSION("igbinary", "igbinary.c hash_si.c hash_function.c");
-	AC_DEFINE('HAVE_IGBINARY', 1, 'Have igbinary support', false);
-	ADD_EXTENSION_DEP('igbinary', 'session');
+  res = CHECK_HEADER_ADD_INCLUDE("apc_serializer.h", "CFLAGS_IGBINARY", "..\\pecl\\apc;ext\\apc");
+
+  EXTENSION("igbinary", "igbinary.c hash_si.c hash_function.c");
+  AC_DEFINE('HAVE_IGBINARY', 1, 'Have igbinary support', false);
+  ADD_EXTENSION_DEP('igbinary', 'session');
 }
