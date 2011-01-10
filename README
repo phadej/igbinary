@@ -90,7 +90,7 @@ Mailing list for bug reports and other development discussion can be found
 at http://groups.google.com/group/igbinary
 
 The preferred ways for contributions are pull requests and email patches
-(in git format). Feel free to fork at http://github.com/dynamoid/igbinary
+(in git format). Feel free to fork at http://github.com/igbinary/igbinary
 
 Utilizing in other extensions
 -----------------------------
