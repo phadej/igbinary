@@ -17,4 +17,5 @@ echo implode("\n", $array);
 igbinary
 igbinary support => enabled
 igbinary version => %s
+igbinary APC serializer ABI => %s
 igbinary.compact_strings => %s => %s
