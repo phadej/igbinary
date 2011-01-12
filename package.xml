@@ -44,6 +44,7 @@ http://pear.php.net/dtd/package-2.0.xsd">
       <file name="igbinary.h" role="src" />
       <file name="php_igbinary.h" role="src" />
       <file name="ig_win32.h" role="src" />
+	  <file name="apc_serializer.h" role="src" />
 
       <file name="igbinary.php" role="doc" />
       <file name="igbinary.php.ini" role="doc" />
