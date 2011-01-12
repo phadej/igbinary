@@ -22,9 +22,13 @@
 #include "ext/standard/info.h"
 #include "ext/session/php_session.h"
 #include "ext/standard/php_incomplete_class.h"
-#ifdef HAVE_APC_SUPPORT
-# include "ext/apc/apc_serializer.h"
-#endif
+#ifdef HAVE_APC_SUPPORT 
+# if USE_BUNDLED_APC
+#  include "apc_serializer.h"
+# else
+#  include "ext/apc/apc_serializer.h"
+# endif
+#endif /* HAVE_APC_SUPPORT */
 #include "php_igbinary.h"
 
 #include "igbinary.h"
@@ -267,7 +271,7 @@ PHP_MINIT_FUNCTION(igbinary) {
 		PS_SERIALIZER_DECODE_NAME(igbinary));
 #endif
 
-#if HAVE_APC_SUPPORT
+#ifdef HAVE_APC_SUPPORT
 	apc_register_serializer("igbinary",
 		APC_SERIALIZER_NAME(igbinary),
 		APC_UNSERIALIZER_NAME(igbinary),
@@ -302,6 +306,11 @@ PHP_MINFO_FUNCTION(igbinary) {
 	php_info_print_table_start();
 	php_info_print_table_row(2, "igbinary support", "enabled");
 	php_info_print_table_row(2, "igbinary version", IGBINARY_VERSION);
+#ifdef HAVE_APC_SUPPORT
+	php_info_print_table_row(2, "igbinary APC serializer ABI", APC_SERIALIZER_ABI);
+#else
+	php_info_print_table_row(2, "igbinary APC serializer ABI", "no");
+#endif
 	php_info_print_table_end();
 
 	DISPLAY_INI_ENTRIES();
@@ -326,9 +335,11 @@ int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
 		return 1;
 	}
 
+	/* Explicit nul termination */
 	*ret_len = igsd.buffer_size;
-	*ret = (uint8_t *) emalloc(igsd.buffer_size);
+	*ret = (uint8_t *) emalloc(igsd.buffer_size + 1);
 	memcpy(*ret, igsd.buffer, igsd.buffer_size);
+	*(ret + igsd.buffer_size) = 0;
 
 	igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
 
@@ -514,20 +525,24 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	return SUCCESS;
 }
 /* }}} */
+
 #ifdef HAVE_APC_SUPPORT
 /* {{{ apc_serialize function */
 static int APC_SERIALIZER_NAME(igbinary) ( APC_SERIALIZER_ARGS ) {
-	if (igbinary_serialize(buf, buf_len, value) == 0) {
+	(void)config;
+
+	if (igbinary_serialize(buf, buf_len, (zval *)value TSRMLS_CC) == 0) {
 		/* flipped semantics */
 		return 1;
 	}
 	return 0;
 }
 /* }}} */
-
 /* {{{ apc_unserialize function */
 static int APC_UNSERIALIZER_NAME(igbinary) ( APC_UNSERIALIZER_ARGS ) {
-	if (igbinary_unserialize(buf, buf_len, value) == 0) {
+	(void)config;
+
+	if (igbinary_unserialize(buf, buf_len, value TSRMLS_CC) == 0) {
 		/* flipped semantics */
 		return 1;
 	}
@@ -537,6 +552,7 @@ static int APC_UNSERIALIZER_NAME(igbinary) ( APC_UNSERIALIZER_ARGS ) {
 }
 /* }}} */
 #endif
+
 /* {{{ igbinary_serialize_data_init */
 /** Inits igbinary_serialize_data. */
 inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *igsd, bool scalar TSRMLS_DC) {

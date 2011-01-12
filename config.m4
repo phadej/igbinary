@@ -22,11 +22,15 @@ if test "$PHP_IGBINARY" != "no"; then
 
   AC_MSG_CHECKING([for apc includes])
   if test -f "$phpincludedir/ext/apc/apc_serializer.h"; then
-      apc_inc_path="$phpincludedir"
-      AC_MSG_RESULT([$apc_inc_path])
-      AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+    apc_inc_path="$phpincludedir"
+	AC_MSG_RESULT([$apc_inc_path])
+	AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+  elif test -f "${srcdir}/apc_serializer.h"; then
+  	AC_MSG_RESULT([apc_serializer.h bundled])
+	AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+	AC_DEFINE(USE_BUNDLED_APC,1,[Whether to use bundled apc includes])
   else
-      AC_MSG_RESULT([not found])
+    AC_MSG_RESULT([not found])
   fi
 
   AC_CHECK_SIZEOF([long])
