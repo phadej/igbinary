@@ -3,11 +3,18 @@ igbinary
 
 Igbinary is a drop in replacement for the standard php serializer. Instead of
 time and space consuming textual representation, igbinary stores php data
-structures in a compact binary form. Savings are significant when using
+structures in compact binary form. Savings are significant when using
 memcached or similar memory based storages for serialized data. About 50%
 reduction in storage requirement can be expected. Specific number depends on
-your data. (Un)serialization performance is at least on par with the standard
-PHP serializer.
+your data.
+
+Unserialization performance is at least on par with the standard PHP serializer.
+Serialization performance depends on the "compact_strings" option which enables
+duplicate string tracking. String are inserted to a hash table which adds some
+overhead. In usual scenarios this does not have much significance since usage
+pattern is "serialize rarely, unserialize often". With "compact_strings"
+option igbinary is usually a bit slower than the standard serializer. Without
+it, a bit faster.
 
 Features
 --------
@@ -19,7 +26,8 @@ Features
 - Serializable -interface
 - Data portability between platforms (32/64bit, endianess)
 - Tested on Linux amd64, Mac OSX x86, HP-UX PA-RISC and NetBSD sparc64
-- Compatible with PHP5 (tested with 5.2.4 and 5.2.5)
+- Hooks up to APC opcode cache as a serialization handler (APC 3.1.7+)
+- Compatible with PHP 5.2 and 5.3
 
 Implementation details
 ----------------------
@@ -35,8 +43,8 @@ reasons in order of significance are (at least in our applications):
 Igbinary uses two specific strategies to minimize the size of the serialized
 output.
 
-1. Strings are stored only once by using a hash table. Arrays of associate
-   arrays with very verbose keys are stored very compactly.
+1. Repetitive strings are stored only once. Collections of objects benefit
+   significantly from this. See "compact_strings" option.
 
 2. Numerical values are stored in the smallest primitive data type
    available:
@@ -45,7 +53,7 @@ output.
    *123456* = ``int32_t``
    ... and so on.
 
-3. Well, it is not human readable ;)
+3. ( Well, it is not human readable ;)
 
 How to use
 ----------
@@ -58,6 +66,13 @@ Add the following lines to your php.ini:
   # Use igbinary as session serializer
   session.serialize_handler=igbinary
 
+  # Enable or disable compacting of duplicate strings
+  # The default is On.
+  igbinary.compact_strings=On
+
+  # Use igbinary as serializer in APC cache (3.1.7 or later)
+  ;apc.serializer=igbinary
+
 .. and in your php code replace serialize and unserialize function calls
 with ``igbinary_serialize`` and ``igbinary_unserialize``.
 
@@ -67,8 +82,6 @@ Installing
 Note:
 Sometimes phpize must be substituted with phpize5. In such cases the following
 option must be given to configure script: "--with-php-config=.../php-config5" 
-
-Compiling:
 
 1. phpize
 
