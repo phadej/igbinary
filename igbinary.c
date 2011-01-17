@@ -339,7 +339,7 @@ int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
 	*ret_len = igsd.buffer_size;
 	*ret = (uint8_t *) emalloc(igsd.buffer_size + 1);
 	memcpy(*ret, igsd.buffer, igsd.buffer_size);
-	*(ret + igsd.buffer_size) = 0;
+	*(*ret + igsd.buffer_size) = 0;
 
 	igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
 
