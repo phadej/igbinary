@@ -1,6 +1,6 @@
 # Define version and release number
 %define version 1.0.2
-%define release 1
+%define release 2
 
 Name:      php-igbinary
 Version:   %{version}
@@ -22,7 +22,7 @@ Instead of time and space consuming textual representation,
 igbinary stores PHP data structures in a compact binary form. 
 
 %prep
-%setup -q -n igbinary-%{version}
+%setup -q -c -n igbinary-%{version}
 
 %build
 /usr/bin/phpize && %configure && %{__make} %{?_smp_mflags}
@@ -37,7 +37,7 @@ igbinary stores PHP data structures in a compact binary form.
 %{__mkdir} -p %{buildroot}/etc/php.d
 
 # Preliminary extension ini
-echo "extension=igbinary.so" > %{buildroot}/%{_sysconfdir}/php.d/igbinary.ini
+echo -e "extension=igbinary.so\napc.serializer = igbinary" > %{buildroot}/%{_sysconfdir}/php.d/igbinary.ini
 
 %clean
 [ "%{buildroot}" != "/" ] && %{__rm} -rf %{buildroot}
@@ -48,5 +48,7 @@ echo "extension=igbinary.so" > %{buildroot}/%{_sysconfdir}/php.d/igbinary.ini
 %{_includedir}/php/ext/igbinary/igbinary.h
 
 %changelog
+* Wed Jan 19 2011 Gopal V <gopalv@php.net>
+ - apc.serializer ini options
 * Fri Oct 02 2009 Mikko Koppanen <mikko@ibuildings.com>
  - Initial spec file
