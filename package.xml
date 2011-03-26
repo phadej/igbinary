@@ -22,7 +22,7 @@
  <date>2011-03-14</date>
  <time>12:32:48</time>
  <version>
-  <release>1.1.1</release>
+  <release>1.1.2-dev</release>
   <api>1.1.1</api>
  </version>
  <stability>
@@ -31,7 +31,7 @@
  </stability>
  <license uri="http://opensource.dynamoid.com/#license">New BSD</license>
  <notes>
-- Initial PECL release
+- PECL bug #22614, igbinary_unserialize(FALSE) must return FALSE 
  </notes>
  <contents>
   <dir name="/">
@@ -71,6 +71,22 @@
  <providesextension>igbinary</providesextension>
  <extsrcrelease />
  <changelog>
+  <release>
+   <date>2011-03-14</date>
+   <time>12:32:48</time>
+   <version>
+    <release>1.1.1</release>
+    <api>1.1.1</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="http://opensource.dynamoid.com/#license">New BSD</license>
+   <notes>
+- Initial PECL release
+   </notes>
+  </release>
   <release>
    <date>2009-09-02</date>
    <version>
