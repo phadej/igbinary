@@ -384,7 +384,7 @@ PHP_FUNCTION(igbinary_unserialize) {
 	}
 
 	if (string_len <= 0) {
-		RETURN_NULL();
+		RETURN_FALSE;
 	}
 
 	if (igbinary_unserialize((uint8_t *) string, string_len, &return_value TSRMLS_CC)) {
