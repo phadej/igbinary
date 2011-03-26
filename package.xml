@@ -35,27 +35,27 @@
  </notes>
  <contents>
   <dir name="/">
-   <file md5sum="25a40e6248e3c0ec643cf9aec85de701" name="config.m4" role="src" />
-   <file md5sum="2f4a0be3f4bde67e2d1d520950ef114f" name="config.w32" role="src" />
-   <file md5sum="2aee655295cd659163750dd660256890" name="hash.h" role="src" />
-   <file md5sum="623bdc626d86470dc56e4d68eabf7479" name="hash_function.c" role="src" />
-   <file md5sum="5b76399c6903280d52778fae36b3912f" name="hash_function.h" role="src" />
-   <file md5sum="328097620a5d4ec1a14367b09b43b1db" name="hash_si.c" role="src" />
-   <file md5sum="6af207bdb08d0a847a8397852d75e191" name="igbinary.c" role="src" />
-   <file md5sum="c816c8c774e6d0bfa0b2d68064884da7" name="igbinary.h" role="src" />
-   <file md5sum="edff8c2c04fa84e3d72ce4a9ac85acd1" name="php_igbinary.h" role="src" />
-   <file md5sum="85cc0ae7373ee9be2674a459c82d6527" name="ig_win32.h" role="src" />
-   <file md5sum="c253cad5fe60301399f0cfe4aa8ddd77" name="apc_serializer.h" role="src" />
-   <file md5sum="0876e1bfd187714fa2fb7f846c832e27" name="igbinary.php" role="doc" />
-   <file md5sum="ec6d65122bf896f39b07b1fa9702b8c6" name="igbinary.php.ini" role="doc" />
-   <file md5sum="f689b3371abc4e94adfe44890e1c8bf5" name="tags.sh" role="doc" />
-   <file md5sum="428aab84dcb89f8b36cae8676dbab1c2" name="igbinary.spec" role="doc" />
-   <file md5sum="952518c6ca2548882e413d0385fa9566" name="ChangeLog" role="doc" />
-   <file md5sum="1baee8825230aa507ac1a00c3c501537" name="COPYING" role="doc" />
-   <file md5sum="90c51289ecb0de4423d1c93d8f431819" name="CREDITS" role="doc" />
-   <file md5sum="d41d8cd98f00b204e9800998ecf8427e" name="EXPERIMENTAL" role="doc" />
-   <file md5sum="4636dfb4473992ff6b06e2d1b7bb7631" name="README" role="doc" />
-   <file md5sum="7b31de8dd5f56c1648685cf4b968346e" name="NEWS" role="doc" />
+   <file name="config.m4" role="src" />
+   <file name="config.w32" role="src" />
+   <file name="hash.h" role="src" />
+   <file name="hash_function.c" role="src" />
+   <file name="hash_function.h" role="src" />
+   <file name="hash_si.c" role="src" />
+   <file name="igbinary.c" role="src" />
+   <file name="igbinary.h" role="src" />
+   <file name="php_igbinary.h" role="src" />
+   <file name="ig_win32.h" role="src" />
+   <file name="apc_serializer.h" role="src" />
+   <file name="igbinary.php" role="doc" />
+   <file name="igbinary.php.ini" role="doc" />
+   <file name="tags.sh" role="doc" />
+   <file name="igbinary.spec" role="doc" />
+   <file name="ChangeLog" role="doc" />
+   <file name="COPYING" role="doc" />
+   <file name="CREDITS" role="doc" />
+   <file name="EXPERIMENTAL" role="doc" />
+   <file name="README" role="doc" />
+   <file name="NEWS" role="doc" />
   </dir>
  </contents>
  <dependencies>
