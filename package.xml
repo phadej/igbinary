@@ -1,76 +1,90 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<package packagerversion="1.4.11" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0
-http://pear.php.net/dtd/tasks-1.0.xsd
-http://pear.php.net/dtd/package-2.0
-http://pear.php.net/dtd/package-2.0.xsd">
-<name>igbinary</name>
-  <channel>pecl.php.net</channel> <!-- doesn't allow empty channel -->
-  <summary>igbinary extension</summary>
-  <description>
-	Igbinary is a drop in replacement for the standard php serializer. Instead of
+<package packagerversion="1.9.1" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>igbinary</name>
+ <channel>pecl.php.net</channel>
+ <summary>igbinary extension</summary>
+ <description>Igbinary is a drop in replacement for the standard php serializer. Instead of
 	time and space consuming textual representation, igbinary stores php data
 	structures in a compact binary form. Savings are significant when using
-	memcached or similar memory based storages for serialized data.
-  </description>
-  <lead>
-    <name>Oleg Grenrus</name>
-    <user></user>
-    <email>oleg.grenrus@dynamoid.com</email>
-    <active>yes</active>
-  </lead>
-  <date>2009-09-02</date>
-  <version>
+	memcached or similar memory based storages for serialized data.</description>
+ <lead>
+  <name>Pierre Joye</name>
+  <user>pajoye</user>
+  <email>pierre@php.net</email>
+  <active>yes</active>
+ </lead>
+ <lead>
+  <name>Teddy Grenman</name>
+  <user>tricky</user>
+  <email>teddy.pecl@luuseri.com</email>
+  <active>yes</active>
+ </lead>
+ <date>2011-03-14</date>
+ <time>12:32:48</time>
+ <version>
+  <release>1.1.1</release>
+  <api>1.1.1</api>
+ </version>
+ <stability>
+  <release>stable</release>
+  <api>stable</api>
+ </stability>
+ <license uri="http://opensource.dynamoid.com/#license">New BSD</license>
+ <notes>
+- Initial PECL release
+ </notes>
+ <contents>
+  <dir name="/">
+   <file md5sum="25a40e6248e3c0ec643cf9aec85de701" name="config.m4" role="src" />
+   <file md5sum="2f4a0be3f4bde67e2d1d520950ef114f" name="config.w32" role="src" />
+   <file md5sum="2aee655295cd659163750dd660256890" name="hash.h" role="src" />
+   <file md5sum="623bdc626d86470dc56e4d68eabf7479" name="hash_function.c" role="src" />
+   <file md5sum="5b76399c6903280d52778fae36b3912f" name="hash_function.h" role="src" />
+   <file md5sum="328097620a5d4ec1a14367b09b43b1db" name="hash_si.c" role="src" />
+   <file md5sum="6af207bdb08d0a847a8397852d75e191" name="igbinary.c" role="src" />
+   <file md5sum="c816c8c774e6d0bfa0b2d68064884da7" name="igbinary.h" role="src" />
+   <file md5sum="edff8c2c04fa84e3d72ce4a9ac85acd1" name="php_igbinary.h" role="src" />
+   <file md5sum="85cc0ae7373ee9be2674a459c82d6527" name="ig_win32.h" role="src" />
+   <file md5sum="c253cad5fe60301399f0cfe4aa8ddd77" name="apc_serializer.h" role="src" />
+   <file md5sum="0876e1bfd187714fa2fb7f846c832e27" name="igbinary.php" role="doc" />
+   <file md5sum="ec6d65122bf896f39b07b1fa9702b8c6" name="igbinary.php.ini" role="doc" />
+   <file md5sum="f689b3371abc4e94adfe44890e1c8bf5" name="tags.sh" role="doc" />
+   <file md5sum="428aab84dcb89f8b36cae8676dbab1c2" name="igbinary.spec" role="doc" />
+   <file md5sum="952518c6ca2548882e413d0385fa9566" name="ChangeLog" role="doc" />
+   <file md5sum="1baee8825230aa507ac1a00c3c501537" name="COPYING" role="doc" />
+   <file md5sum="90c51289ecb0de4423d1c93d8f431819" name="CREDITS" role="doc" />
+   <file md5sum="d41d8cd98f00b204e9800998ecf8427e" name="EXPERIMENTAL" role="doc" />
+   <file md5sum="4636dfb4473992ff6b06e2d1b7bb7631" name="README" role="doc" />
+   <file md5sum="7b31de8dd5f56c1648685cf4b968346e" name="NEWS" role="doc" />
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>5.2.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.4.0b1</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>igbinary</providesextension>
+ <extsrcrelease />
+ <changelog>
+  <release>
+   <date>2009-09-02</date>
+   <version>
     <release>1.0.2</release>
     <api>1.0.2</api>
-  </version>
-  <stability>
+   </version>
+   <stability>
     <release>stable</release>
     <api>stable</api>
-  </stability>
-  <license uri="http://opensource.dynamoid.com/#license">PHP like license</license>
-  <notes>
-   - Use Z_ADDREF_PP or Z_ADDREF et al. when increasing refcount.
-  </notes>
-  <contents>
-    <dir name="/">
-      <file name="config.m4" role="src" />
-      <file name="config.w32" role="src" />
-
-      <file name="hash.h" role="src" />
-      <file name="hash_function.c" role="src" />
-      <file name="hash_function.h" role="src" />
-      <file name="hash_si.c" role="src" />
-      <file name="igbinary.c" role="src" />
-      <file name="igbinary.h" role="src" />
-      <file name="php_igbinary.h" role="src" />
-      <file name="ig_win32.h" role="src" />
-	  <file name="apc_serializer.h" role="src" />
-
-      <file name="igbinary.php" role="doc" />
-      <file name="igbinary.php.ini" role="doc" />
-      <file name="tags.sh" role="doc" />
-      <file name="igbinary.spec" role="doc" />
-	
-      <file name="ChangeLog" role="doc" />
-      <file name="COPYING" role="doc" />
-      <file name="CREDITS" role="doc" />
-      <file name="EXPERIMENTAL" role="doc" />
-      <file name="README" role="doc" />
-      <file name="NEWS" role="doc" />
-     </dir>
-  </contents>
-  <dependencies>
-    <required>
-      <php>
-        <min>5.2.0</min>
-      </php>
-      <pearinstaller>
-        <min>1.4.0b1</min>
-      </pearinstaller>
-    </required>
-  </dependencies>
-  <providesextension>igbinary</providesextension>
-  <extsrcrelease>
-  </extsrcrelease>
-
+   </stability>
+   <license uri="http://opensource.dynamoid.com/#license">PHP like license</license>
+   <notes>
+- Use Z_ADDREF_PP or Z_ADDREF et al. when increasing refcount.
+   </notes>
+  </release>
+ </changelog>
 </package>
