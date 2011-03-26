@@ -30,7 +30,7 @@ foreach ($datas as $data) {
 		$v = igbinary_unserialize(substr($str, 0, $i));
 		if (is_object($data) && $v !== null && $v == $data) {
 			continue;
-		} elseif ($v !== null && $v !== $data) {
+		} elseif ($v !== null && $v != FALSE && $v !== $data) {
 			echo "output at $i:\n";
 			var_dump($v);
 			echo "vs.\n";
