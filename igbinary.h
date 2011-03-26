@@ -16,7 +16,7 @@
 #endif
 #include "php.h"
 
-#define IGBINARY_VERSION "1.1.1"
+#define IGBINARY_VERSION "1.1.2-dev"
 
 /** Serialize zval.
  * Return buffer is allocated by this function with emalloc.
