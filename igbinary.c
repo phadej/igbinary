@@ -1720,6 +1720,8 @@ inline static int igbinary_unserialize_array(struct igbinary_unserialize_data *i
 /** Unserializes object's property array of objects implementing Serializable -interface. */
 inline static int igbinary_unserialize_object_ser(struct igbinary_unserialize_data *igsd, enum igbinary_type t, zval **z, zend_class_entry *ce TSRMLS_DC) {
 	size_t n;
+	int ret;
+	php_unserialize_data_t var_hash;
 
 	if (ce->unserialize == NULL) {
 		zend_error(E_WARNING, "Class %s has no unserializer", ce->name);
@@ -1754,9 +1756,13 @@ inline static int igbinary_unserialize_object_ser(struct igbinary_unserialize_da
 		return 1;
 	}
 
-	if (ce->unserialize(z, ce, (const unsigned char*)(igsd->buffer + igsd->buffer_offset), n, NULL TSRMLS_CC) != SUCCESS) {
-		return 1;
-	} else if (EG(exception)) {
+	PHP_VAR_UNSERIALIZE_INIT(var_hash);
+	ret = ce->unserialize(z, ce, 
+		(const unsigned char*)(igsd->buffer + igsd->buffer_offset), n,
+		(zend_unserialize_data *)&var_hash TSRMLS_CC);
+	PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
+
+	if (ret != SUCCESS || EG(exception)) {
 		return 1;
 	}
 

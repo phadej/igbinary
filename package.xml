@@ -32,6 +32,7 @@
  <license uri="http://opensource.dynamoid.com/#license">New BSD</license>
  <notes>
 - PECL bug #22614, igbinary_unserialize(FALSE) must return FALSE 
+- PHP bug #54662, unserializing nested objects cause crash
  </notes>
  <contents>
   <dir name="/">
@@ -57,49 +58,50 @@
    <file name="README" role="doc" />
    <file name="NEWS" role="doc" />
    <dir name="tests">
-    <file name="igbinary_001.phpt role="test" />
-    <file name="igbinary_002.phpt role="test" />
-    <file name="igbinary_003.phpt role="test" />
-    <file name="igbinary_004.phpt role="test" />
-    <file name="igbinary_005.phpt role="test" />
-    <file name="igbinary_006.phpt role="test" />
-    <file name="igbinary_007.phpt role="test" />
-    <file name="igbinary_008.phpt role="test" />
-    <file name="igbinary_009.phpt role="test" />
-    <file name="igbinary_010.phpt role="test" />
-    <file name="igbinary_012.phpt role="test" />
-    <file name="igbinary_013.phpt role="test" />
-    <file name="igbinary_014.phpt role="test" />
-    <file name="igbinary_015.phpt role="test" />
-    <file name="igbinary_015b.phpt role="test" />
-    <file name="igbinary_016.phpt role="test" />
-    <file name="igbinary_017.phpt role="test" />
-    <file name="igbinary_018.phpt role="test" />
-    <file name="igbinary_019.phpt role="test" />
-    <file name="igbinary_020.phpt role="test" />
-    <file name="igbinary_021.phpt role="test" />
-    <file name="igbinary_022.phpt role="test" />
-    <file name="igbinary_023.phpt role="test" />
-    <file name="igbinary_024.phpt role="test" />
-    <file name="igbinary_025.phpt role="test" />
-    <file name="igbinary_026.phpt role="test" />
-    <file name="igbinary_026b.phpt role="test" />
-    <file name="igbinary_027.phpt role="test" />
-    <file name="igbinary_028.phpt role="test" />
-    <file name="igbinary_029.phpt role="test" />
-    <file name="igbinary_030.phpt role="test" />
-    <file name="igbinary_031.phpt role="test" />
-    <file name="igbinary_032.phpt role="test" />
-    <file name="igbinary_033.phpt role="test" />
-    <file name="igbinary_034.phpt role="test" />
-    <file name="igbinary_035.phpt role="test" />
-    <file name="igbinary_040.phpt role="test" />
-    <file name="igbinary_041.phpt role="test" />
-    <file name="igbinary_042.phpt role="test" />
-    <file name="igbinary_043.phpt role="test" />
-    <file name="igbinary_044.phpt role="test" />
-    <file name="igbinary_045.phpt role="test" />
-    <file name="igbinary_unserialize_v1_compatible.phpt role="test" />
+    <file name="igbinary_001.phpt" role="test" />
+    <file name="igbinary_002.phpt" role="test" />
+    <file name="igbinary_003.phpt" role="test" />
+    <file name="igbinary_004.phpt" role="test" />
+    <file name="igbinary_005.phpt" role="test" />
+    <file name="igbinary_006.phpt" role="test" />
+    <file name="igbinary_007.phpt" role="test" />
+    <file name="igbinary_008.phpt" role="test" />
+    <file name="igbinary_009.phpt" role="test" />
+    <file name="igbinary_010.phpt" role="test" />
+    <file name="igbinary_012.phpt" role="test" />
+    <file name="igbinary_013.phpt" role="test" />
+    <file name="igbinary_014.phpt" role="test" />
+    <file name="igbinary_015.phpt" role="test" />
+    <file name="igbinary_015b.phpt" role="test" />
+    <file name="igbinary_016.phpt" role="test" />
+    <file name="igbinary_017.phpt" role="test" />
+    <file name="igbinary_018.phpt" role="test" />
+    <file name="igbinary_019.phpt" role="test" />
+    <file name="igbinary_020.phpt" role="test" />
+    <file name="igbinary_021.phpt" role="test" />
+    <file name="igbinary_022.phpt" role="test" />
+    <file name="igbinary_023.phpt" role="test" />
+    <file name="igbinary_024.phpt" role="test" />
+    <file name="igbinary_025.phpt" role="test" />
+    <file name="igbinary_026.phpt" role="test" />
+    <file name="igbinary_026b.phpt" role="test" />
+    <file name="igbinary_027.phpt" role="test" />
+    <file name="igbinary_028.phpt" role="test" />
+    <file name="igbinary_029.phpt" role="test" />
+    <file name="igbinary_030.phpt" role="test" />
+    <file name="igbinary_031.phpt" role="test" />
+    <file name="igbinary_032.phpt" role="test" />
+    <file name="igbinary_033.phpt" role="test" />
+    <file name="igbinary_034.phpt" role="test" />
+    <file name="igbinary_035.phpt" role="test" />
+    <file name="igbinary_040.phpt" role="test" />
+    <file name="igbinary_041.phpt" role="test" />
+    <file name="igbinary_042.phpt" role="test" />
+    <file name="igbinary_043.phpt" role="test" />
+    <file name="igbinary_044.phpt" role="test" />
+    <file name="igbinary_045.phpt" role="test" />
+    <file name="igbinary_bug54662.phpt" role="test" />
+    <file name="igbinary_unserialize_v1_compatible.phpt" role="test" />
    </dir>
   </dir>
  </contents>
