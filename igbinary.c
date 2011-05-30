@@ -343,6 +343,7 @@ IGBINARY_API int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRM
 	}
 
 	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
+		zend_error(E_WARNING, "igbinary_serialize: cannot write header");
 		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
 		return 1;
 	}
@@ -404,7 +405,7 @@ PHP_FUNCTION(igbinary_unserialize) {
 		RETURN_FALSE;
 	}
 
-	if (igbinary_unserialize((uint8_t *) string, string_len, &return_value TSRMLS_CC)) {
+	if (igbinary_unserialize((uint8_t *) string, string_len, &return_value TSRMLS_CC) != 0) {
 		RETURN_NULL();
 	}
 }
@@ -412,7 +413,8 @@ PHP_FUNCTION(igbinary_unserialize) {
 /* {{{ proto mixed igbinary_serialize(string value) */
 PHP_FUNCTION(igbinary_serialize) {
 	zval *z;
-	struct igbinary_serialize_data igsd;
+	uint8_t *string;
+	size_t string_len;
 
 	(void) return_value_ptr;
 	(void) this_ptr;
@@ -423,25 +425,11 @@ PHP_FUNCTION(igbinary_serialize) {
 		RETURN_NULL();
 	}
 
-	if (igbinary_serialize_data_init(&igsd, Z_TYPE_P(z) != IS_OBJECT && Z_TYPE_P(z) != IS_ARRAY TSRMLS_CC)) {
-		zend_error(E_WARNING, "igbinary_serialize: cannot init igsd");
+	if (igbinary_serialize(&string, &string_len, z TSRMLS_CC) != 0) {
 		RETURN_NULL();
 	}
 
-	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
-		zend_error(E_WARNING, "igbinary_serialize: cannot write header");
-		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
-		RETURN_NULL();
-	}
-
-	if (igbinary_serialize_zval(&igsd, z TSRMLS_CC) != 0) {
-		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
-		RETURN_NULL();
-	}
-
-	RETVAL_STRINGL((char *)igsd.buffer, igsd.buffer_size, 1);
-
-	igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+	RETVAL_STRINGL((char *)string, string_len, 0);
 }
 /* }}} */
 /* {{{ Serializer encode function */
