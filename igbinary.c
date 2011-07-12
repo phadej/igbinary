@@ -317,7 +317,7 @@ PHP_MINFO_FUNCTION(igbinary) {
 }
 /* }}} */
 /* {{{ int igbinary_serialize(uint8_t**, size_t*, zval*) */
-int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
+IGBINARY_API int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
 	struct igbinary_serialize_data igsd;
 
 	if (igbinary_serialize_data_init(&igsd, Z_TYPE_P(z) != IS_OBJECT && Z_TYPE_P(z) != IS_ARRAY TSRMLS_CC)) {
@@ -347,7 +347,7 @@ int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC) {
 }
 /* }}} */
 /* {{{ int igbinary_unserialize(const uint8_t *, size_t, zval **) */
-int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC) {
+IGBINARY_API int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC) {
 	struct igbinary_unserialize_data igsd;
 
 	igbinary_unserialize_data_init(&igsd TSRMLS_CC);
