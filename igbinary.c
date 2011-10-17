@@ -1130,7 +1130,6 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 
 	/* custom serializer */
 	if (ce && ce->serialize != NULL) {
-		/* TODO: var_hash? */
 		if(ce->serialize(z, &serialized_data, &serialized_len, (zend_serialize_data *)NULL TSRMLS_CC) == SUCCESS && !EG(exception)) {
 			igbinary_serialize_object_name(igsd, ce->name, ce->name_length TSRMLS_CC);
 
@@ -1220,6 +1219,21 @@ inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC) {
 	if (Z_ISREF_P(z)) {
 		igbinary_serialize8(igsd, (uint8_t) igbinary_type_ref TSRMLS_CC);
+		/* Complex types serialize a reference, scalars do not... */
+		/* FIXME: Absolutely wrong level to check this. */
+		switch (Z_TYPE_P(z)) {
+			case IS_RESOURCE:
+			case IS_STRING:
+			case IS_LONG:
+			case IS_NULL:
+			case IS_BOOL:
+			case IS_DOUBLE:
+				/* Serialize a reference if zval already added */
+				if (igbinary_serialize_array_ref(igsd, z, false TSRMLS_CC) == 0) {
+					return 0;
+				}
+				/* otherwise fall through */
+		}
 	}
 	switch (Z_TYPE_P(z)) {
 		case IS_RESOURCE:
@@ -1988,6 +2002,28 @@ static int igbinary_unserialize_zval(struct igbinary_unserialize_data *igsd, zva
 		case igbinary_type_ref:
 			if (igbinary_unserialize_zval(igsd, z TSRMLS_CC)) {
 				return 1;
+			}
+			/* Scalar types should be added to the references hash */
+			/* unless they're already added */
+			/* in references list: marked as ref */
+			if (!Z_ISREF_PP(z)) switch (Z_TYPE_PP(z)) {
+				case IS_STRING:
+				case IS_LONG:
+				case IS_NULL:
+				case IS_DOUBLE:
+				case IS_BOOL:
+					/* reference */
+					if (igsd->references_count + 1 >= igsd->references_capacity) {
+						while (igsd->references_count + 1 >= igsd->references_capacity) {
+							igsd->references_capacity *= 2;
+						}
+
+						igsd->references = (void **) erealloc(igsd->references, sizeof(void *) * igsd->references_capacity);
+						if (igsd->references == NULL)
+							return 1;
+					}
+
+					igsd->references[igsd->references_count++] = (void *) *z;
 			}
 			Z_SET_ISREF_TO_PP(z, true);
 			break;
