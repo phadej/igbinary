@@ -16,6 +16,20 @@
 #endif
 #include "php.h"
 
+#ifdef PHP_WIN32
+#	if defined(IGBINARY_EXPORTS) || (!defined(COMPILE_DL_IGBINARY))
+#		define IGBINARY_API __declspec(dllexport)
+#	elif defined(COMPILE_DL_IGBINARY)
+#		define IGBINARY_API __declspec(dllimport)
+#	else
+#		define IGBINARY_API /* nothing special */
+#	endif
+#elif defined(__GNUC__) && __GNUC__ >= 4
+#	define IGBINARY_API __attribute__ ((visibility("default")))
+#else
+#	define IGBINARY_API /* nothing special */
+#endif
+
 #define IGBINARY_VERSION "1.1.2-dev"
 
 /** Serialize zval.
@@ -25,7 +39,7 @@
  * @param[in] z Variable to be serialized
  * @return 0 on success, 1 elsewhere.
  */
-int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC);
+IGBINARY_API int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC);
 
 /** Unserialize to zval.
  * @param[in] buf Buffer with serialized data.
@@ -33,6 +47,6 @@ int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRMLS_DC);
  * @param[out] z Unserialized zval
  * @return 0 on success, 1 elsewhere.
  */
-int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC);
+IGBINARY_API int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval **z TSRMLS_DC);
 
 #endif /* IGBINARY_H */
