@@ -1,6 +1,11 @@
 /*
- * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- */
+  +----------------------------------------------------------------------+
+  | See COPYING file for further copyright information                   |
+  +----------------------------------------------------------------------+ 
+  | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
+  | See CREDITS for contributors                                         |
+  +----------------------------------------------------------------------+ 
+*/
 
 #ifndef PHP_IGBINARY_H
 #define PHP_IGBINARY_H
