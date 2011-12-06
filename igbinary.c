@@ -17,6 +17,7 @@
 
 #include "php.h"
 #include "php_ini.h"
+#include "php_scandir.h"
 #include "zend_dynamic_array.h"
 #include "zend_alloc.h"
 #include "ext/standard/info.h"
@@ -114,6 +115,7 @@ enum igbinary_type {
  * @author Oleg Grenrus <oleg.grenrus@dynamoid.com>
  */
 struct igbinary_serialize_data {
+	unsigned int version;		/**< Version of format to use */
 	uint8_t *buffer;			/**< Buffer. */
 	size_t buffer_size;			/**< Buffer size. */
 	size_t buffer_capacity;		/**< Buffer capacity. */
@@ -138,6 +140,7 @@ struct igbinary_unserialize_string_pair {
  * @author Oleg Grenrus <oleg.grenrus@dynamoid.com>
  */
 struct igbinary_unserialize_data {
+	unsigned int version;			/**< Version of format to use */
 	uint8_t *buffer;				/**< Buffer. */
 	size_t buffer_size;				/**< Buffer size. */
 	size_t buffer_offset;			/**< Current read offset. */
@@ -154,9 +157,24 @@ struct igbinary_unserialize_data {
 	smart_str string0_buf;			/**< Temporary buffer for strings */
 };
 /* }}} */
+
+/** Shared dictionary structure.
+ */
+/* {{{ */
+struct igbinary_shared_dictionary {
+	char *data;
+	size_t data_len;
+	uint32_t checksum;
+	size_t strings_count; /**< Unserialized string count. */
+	struct igbinary_unserialize_string_pair *strings; /**< Unserialized strings. */
+};
+/* }}} */
+
 /* {{{ Serializing functions prototypes */
 inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *igsd, bool scalar TSRMLS_DC);
 inline static void igbinary_serialize_data_deinit(struct igbinary_serialize_data *igsd TSRMLS_DC);
+
+inline static int igbinary_serialize_dict_init(struct igbinary_serialize_data *igsd, const char *dictname TSRMLS_DC);
 
 inline static int igbinary_serialize_header(struct igbinary_serialize_data *igsd TSRMLS_DC);
 
@@ -183,6 +201,8 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 /* {{{ Unserializing functions prototypes */
 inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_data *igsd TSRMLS_DC);
 inline static void igbinary_unserialize_data_deinit(struct igbinary_unserialize_data *igsd TSRMLS_DC);
+
+inline static int igbinary_unserialize_dict_init(struct igbinary_unserialize_data *igsd TSRMLS_DC);
 
 inline static int igbinary_unserialize_header(struct igbinary_unserialize_data *igsd TSRMLS_DC);
 
@@ -211,12 +231,19 @@ ZEND_END_ARG_INFO()
 ZEND_BEGIN_ARG_INFO_EX(arginfo_igbinary_unserialize, 0, 0, 1)
 	ZEND_ARG_INFO(0, str)
 ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO_EX(arginfo_igbinary_serialize_custom, 0, 0, 1)
+	ZEND_ARG_INFO(0, value)
+	ZEND_ARG_INFO(0, dictionary)
+ZEND_END_ARG_INFO()
+
 /* }}} */
 /* {{{ igbinary_functions[] */
 /** Exported php functions. */
 zend_function_entry igbinary_functions[] = {
 	PHP_FE(igbinary_serialize,                arginfo_igbinary_serialize)
 	PHP_FE(igbinary_unserialize,              arginfo_igbinary_unserialize)
+	PHP_FE(igbinary_serialize_custom,         arginfo_igbinary_serialize_custom)
 	{NULL, NULL, NULL}
 };
 /* }}} */
@@ -267,12 +294,216 @@ ZEND_GET_MODULE(igbinary)
 /* {{{ INI entries */
 PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("igbinary.compact_strings", "1", PHP_INI_ALL, OnUpdateBool, compact_strings, zend_igbinary_globals, igbinary_globals)
+	STD_PHP_INI_BOOLEAN("igbinary.dictionaries", "", PHP_INI_SYSTEM, OnUpdateString, dictionaries, zend_igbinary_globals, igbinary_globals)
+	STD_PHP_INI_BOOLEAN("igbinary.default_dictionary", NULL, PHP_INI_SYSTEM, OnUpdateString, default_dictionary, zend_igbinary_globals, igbinary_globals)
 PHP_INI_END()
 /* }}} */
 
 /* {{{ php_igbinary_init_globals */
 static void php_igbinary_init_globals(zend_igbinary_globals *igbinary_globals) {
 	igbinary_globals->compact_strings = 1;
+	igbinary_globals->dictionaries = NULL;
+	igbinary_globals->default_dictionary = NULL;
+	igbinary_globals->dict_hash = NULL;
+}
+/* }}} */
+
+/* {{{ */
+/* I borrowed this from pecl/hidef and swapped over the retvals (0->1, 1->0), 
+ * ensure all bug-fixes there propogate here */
+typedef int (*igbinary_walk_dir_cb)(const char* filename TSRMLS_DC);
+static int igbinary_walk_dir(const char *path, const char *ext, igbinary_walk_dir_cb cb TSRMLS_DC)
+{
+	char file[MAXPATHLEN]={0,};
+	int ndir, i, k;
+	char *p = NULL;
+	struct dirent **namelist = NULL;
+
+	if ((ndir = php_scandir(path, &namelist, 0, php_alphasort)) > 0)
+	{
+		for (i = 0; i < ndir; i++) 
+		{
+			/* check for extension */
+			if (!(p = strrchr(namelist[i]->d_name, '.')) 
+					|| (p && strcmp(p, ext))) 
+			{
+				free(namelist[i]);
+				continue;
+			}
+			snprintf(file, MAXPATHLEN, "%s%c%s", 
+					path, DEFAULT_SLASH, namelist[i]->d_name);
+
+			if(cb(file TSRMLS_CC) != 0)
+			{
+				goto cleanup;
+			}
+			free(namelist[i]);
+		}
+		free(namelist);
+	}
+
+	return 0;
+
+cleanup:
+	for(k = i; k < ndir; k++)
+	{
+		free(namelist[k]);
+	}
+	free(namelist);
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ */
+static int igbinary_extract_dictionary(uint8_t *buffer, size_t buffer_size, struct igbinary_shared_dictionary *dict TSRMLS_DC)
+{
+	struct igbinary_unserialize_data igsd;
+	uint32_t checksum = 0;
+	zval *v = NULL;
+
+	igbinary_unserialize_data_init(&igsd TSRMLS_CC);
+
+	igsd.buffer = buffer;
+	igsd.buffer_size = buffer_size;
+
+	checksum = hash_function(igsd.buffer, igsd.buffer_size, 0);
+
+	dict->data = buffer;
+	dict->data_len = buffer_size;
+	dict->strings = NULL;
+	dict->strings_count = 0;
+
+	if (igbinary_unserialize_header(&igsd TSRMLS_CC)) {
+		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	if(igsd.version == IGBINARY_FORMAT_SHARED_DICTIONARY) {
+		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	ALLOC_INIT_ZVAL(v);
+
+	if (igbinary_unserialize_zval(&igsd, &v TSRMLS_CC)) {
+		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	dict->strings_count = igsd.strings_count;
+	dict->checksum = checksum;
+	dict->strings = pemalloc(sizeof(struct igbinary_unserialize_string_pair) * igsd.strings_count, 1);
+	/* since this is tied to the igsd->buffer, we keep track of dict->data and we're good on string allocs */
+	memcpy(dict->strings, igsd.strings, sizeof(struct igbinary_unserialize_string_pair) * igsd.strings_count);
+
+	if(v) {
+		zval_ptr_dtor(&v);
+	}
+
+	igbinary_unserialize_data_deinit(&igsd);
+	return 0;
+}
+/* }}} */
+/* {{{ */
+static int igbinary_add_dictionary(const char *path TSRMLS_DC)
+{
+	char *p;
+	char key[MAXPATHLEN+1] = {0,};
+	unsigned int key_len;
+	struct igbinary_shared_dictionary *dict = NULL;
+	long len = 0;
+	struct stat sb;
+	char *contents, *tmp;
+	FILE *fp;
+
+	if(access(path, R_OK) != 0) {
+		/* maybe a broken symlink (skip and continue) */
+		zend_error(E_WARNING, "igbinary cannot read dictionary %s", path);
+		return 0; /* yes, 0 is success */
+	}
+
+	if(VCWD_STAT(path, &sb) == -1) {
+		return 1;
+	}
+
+	if(sb.st_size == 0) {
+		zend_error(E_WARNING, "igbinary cannot read dictionary %s", path);
+		return 0; /* empty files are skipped */
+	}
+
+
+	p = strrchr(path, DEFAULT_SLASH);
+
+	if(!p || !p[1]) {
+		return 1;
+	}
+
+	strlcpy(key, p+1, sizeof(key));
+	p = strrchr(key, '.');
+
+	if(!p) {
+		return 1;
+	}
+
+	p[0] = '\0';
+	key_len = strlen(key);
+
+	dict = pemalloc(sizeof(struct igbinary_shared_dictionary), 1);
+
+	fp = fopen(path, "rb");
+
+	if(!fp)
+	{
+		/* can't read */
+		return 1;
+	}
+
+	/* read the data into the core */
+
+	len = sizeof(char)*sb.st_size;
+
+	tmp = contents = pemalloc(len+1, 1);
+
+	len = fread(contents, 1, len+1, fp);
+
+	fclose(fp);
+
+	if(igbinary_extract_dictionary((uint8_t *) contents, len, dict) != 0) {
+		zend_error(E_WARNING, "igbinary unable to load dictionary %s", path);
+		return 0; /* continue */
+	}
+
+	if(dict->strings_count != 0) {
+		/* no null termination for key, because the igbinary unserialize will need to redundant copies to put the \0 in */
+		if((dict == NULL) || zend_hash_add(IGBINARY_G(dict_hash), key, key_len, &dict, sizeof(void*), NULL) == FAILURE) {
+			zend_error(E_ERROR, "Unable to add %s as an igbinary dictionary", path);
+			return 1;
+		}
+		return 0;
+	} else {
+		zend_error(E_ERROR, "Empty igbinary dictionary in %s", path);
+	}
+
+	return 1;
+}
+/* }}} */
+
+/* {{{ */
+static int igbinary_load_dictionaries(TSRMLS_D)
+{
+	const char *dict_path = NULL;
+
+	if(IGBINARY_G(dictionaries)) 
+	{
+		dict_path = IGBINARY_G(dictionaries);
+	}
+	else
+	{
+		return 0;
+	}
+
+	return igbinary_walk_dir(dict_path, ".dct", igbinary_add_dictionary TSRMLS_CC);
 }
 /* }}} */
 
@@ -296,6 +527,11 @@ PHP_MINIT_FUNCTION(igbinary) {
 #endif
 
 	REGISTER_INI_ENTRIES();
+
+	IGBINARY_G(dict_hash) = pemalloc(sizeof(HashTable), 1);
+	zend_hash_init(IGBINARY_G(dict_hash), 	  32,  NULL, NULL /*igbinary_shared_dictionary_free*/, 1);
+
+	igbinary_load_dictionaries(TSRMLS_C);
 
 	return SUCCESS;
 }
@@ -378,6 +614,10 @@ IGBINARY_API int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval *
 		return 1;
 	}
 
+	if(igbinary_unserialize_dict_init(&igsd TSRMLS_CC) != 0) {
+		return 1;
+	}
+
 	if (igbinary_unserialize_zval(&igsd, z TSRMLS_CC)) {
 		igbinary_unserialize_data_deinit(&igsd TSRMLS_CC);
 		return 1;
@@ -388,6 +628,49 @@ IGBINARY_API int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval *
 	return 0;
 }
 /* }}} */
+
+/* {{{ int igbinary_serialize_custom(uint8_t**, size_t*, zval*, char*) */
+IGBINARY_API int igbinary_serialize_custom(uint8_t **ret, size_t *ret_len, zval *z, char *dictname TSRMLS_DC) {
+	struct igbinary_serialize_data igsd;
+
+	if (igbinary_serialize_data_init(&igsd, Z_TYPE_P(z) != IS_OBJECT && Z_TYPE_P(z) != IS_ARRAY TSRMLS_CC)) {
+		zend_error(E_WARNING, "igbinary_serialize: cannot init igsd");
+		return 1;
+	}
+
+	if((Z_TYPE_P(z) == IS_OBJECT || Z_TYPE_P(z) == IS_ARRAY) && (bool)IGBINARY_G(compact_strings)) {
+		igsd.version = IGBINARY_FORMAT_SHARED_DICTIONARY;
+	}
+
+	if (igbinary_serialize_header(&igsd TSRMLS_CC) != 0) {
+		zend_error(E_WARNING, "igbinary_serialize: cannot write header");
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	if (dictname != NULL && igbinary_serialize_dict_init(&igsd, dictname TSRMLS_CC) != 0) {
+		zend_error(E_WARNING, "igbinary_serialize: could not initialize dictionary %s", dictname);
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	if (igbinary_serialize_zval(&igsd, z TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+		return 1;
+	}
+
+	/* Explicit nul termination */
+	*ret_len = igsd.buffer_size;
+	*ret = (uint8_t *) emalloc(igsd.buffer_size + 1);
+	memcpy(*ret, igsd.buffer, igsd.buffer_size);
+	*(*ret + igsd.buffer_size) = 0;
+
+	igbinary_serialize_data_deinit(&igsd TSRMLS_CC);
+
+	return 0;
+}
+/* }}} */
+
 /* {{{ proto string igbinary_unserialize(mixed value) */
 PHP_FUNCTION(igbinary_unserialize) {
 	char *string;
@@ -426,6 +709,37 @@ PHP_FUNCTION(igbinary_serialize) {
 	}
 
 	if (igbinary_serialize(&string, &string_len, z TSRMLS_CC) != 0) {
+		RETURN_NULL();
+	}
+
+	RETVAL_STRINGL((char *)string, string_len, 0);
+}
+/* }}} */
+/* {{{ proto string igbinary_serialize_custom(mixed value, [string dictionary]) */
+PHP_FUNCTION(igbinary_serialize_custom) {
+	zval *z;
+	uint8_t *string;
+	size_t string_len;
+	char *dictname;
+	int dictname_len;
+
+	(void) return_value_ptr;
+	(void) this_ptr;
+	(void) return_value_used;
+
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|s", &z, &dictname, &dictname_len) == FAILURE) {
+		RETURN_NULL();
+	}
+
+	if(dictname == NULL || dictname_len == 0) {
+		dictname = IGBINARY_G(default_dictionary);
+		if(dictname == NULL || strlen(dictname) == 0) {
+			RETURN_NULL();
+		}
+	}
+
+	if (igbinary_serialize_custom(&string, &string_len, z, dictname TSRMLS_CC) != 0) {
 		RETURN_NULL();
 	}
 
@@ -568,6 +882,7 @@ inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *i
 	igsd->buffer_capacity = 32;
 	igsd->string_count = 0;
 	igsd->error = 0;
+	igsd->version = IGBINARY_FORMAT_VERSION;
 
 	igsd->buffer = (uint8_t *) emalloc(igsd->buffer_capacity);
 	if (igsd->buffer == NULL) {
@@ -598,10 +913,42 @@ inline static void igbinary_serialize_data_deinit(struct igbinary_serialize_data
 	}
 }
 /* }}} */
+
+/* {{{ igbinary_serialize_dict_init */
+/** loads the dictionary and seeds the string hash */
+inline static int igbinary_serialize_dict_init(struct igbinary_serialize_data *igsd, const char *dictname TSRMLS_DC) {
+	struct igbinary_shared_dictionary **pdict = NULL;
+	struct igbinary_shared_dictionary *dict = NULL;
+	struct igbinary_unserialize_string_pair *pair = NULL;
+	if(igsd->version != IGBINARY_FORMAT_SHARED_DICTIONARY) {
+		return 0; /* no worries */
+	}
+	if(IGBINARY_G(dict_hash) == NULL) {
+		return 1;
+	}
+	if(zend_hash_find(IGBINARY_G(dict_hash), dictname, strlen(dictname), (void**)&pdict) == FAILURE) {
+		return 1;
+	}
+	/* add it to the strings hash */
+	dict = *pdict;
+	//fprintf(stderr, "dict (%p) (%d)\n", dict, dict->strings_count);
+	if(dict && dict->strings != NULL) {
+		int i;
+		for(i =0; i < dict->strings_count; i++) {
+			pair = &dict->strings[i];
+			hash_si_insert(&igsd->strings, pair->data, pair->len, i);
+		}
+		igsd->string_count = dict->strings_count;
+	}
+	igbinary_serialize32(igsd, (uint32_t)IGBINARY_LOAD_DICT TSRMLS_CC);
+	igbinary_serialize32(igsd, (uint32_t)dict->checksum TSRMLS_CC);
+	igbinary_serialize_chararray(igsd, dictname, strlen(dictname) TSRMLS_CC);
+	return 0;
+}
 /* {{{ igbinary_serialize_header */
 /** Serializes header. */
 inline static int igbinary_serialize_header(struct igbinary_serialize_data *igsd TSRMLS_DC) {
-	return igbinary_serialize32(igsd, IGBINARY_FORMAT_VERSION TSRMLS_CC); /* version */
+	return igbinary_serialize32(igsd, igsd->version TSRMLS_CC); /* version */
 }
 /* }}} */
 /* {{{ igbinary_serialize_resize */
@@ -818,7 +1165,7 @@ inline static int igbinary_serialize_chararray(struct igbinary_serialize_data *i
 	return 0;
 }
 /* }}} */
-/* {{{ igbinay_serialize_array */
+/* {{{ igbinary_serialize_array */
 /** Serializes array or objects inner properties. */
 inline static int igbinary_serialize_array(struct igbinary_serialize_data *igsd, zval *z, bool object, bool incomplete_class TSRMLS_DC) {
 	HashTable *h;
@@ -1310,6 +1657,70 @@ inline static void igbinary_unserialize_data_deinit(struct igbinary_unserialize_
 	return;
 }
 /* }}} */
+
+/* {{{ igbinary_unserialize_dict_init */
+inline static int igbinary_unserialize_dict_init(struct igbinary_unserialize_data *igsd TSRMLS_DC) {
+
+	enum igbinary_type key_type;
+	uint32_t checksum;
+	char *dictname;
+	size_t dictname_len;
+	struct igbinary_shared_dictionary **pdict = NULL;
+	struct igbinary_shared_dictionary *dict = NULL;
+
+	if(igsd->version != IGBINARY_FORMAT_SHARED_DICTIONARY) {
+		return 0; /* no worries */
+	}
+
+	if(IGBINARY_G(dict_hash) == NULL) {
+		return 1;
+	}
+
+	if(igsd->buffer_offset + 8 >= igsd->buffer_size) {
+		return 1;
+	}
+
+	if(igbinary_unserialize32(igsd TSRMLS_CC) != IGBINARY_LOAD_DICT) {
+		return 1;
+	}
+
+	checksum = igbinary_unserialize32(igsd TSRMLS_CC);
+
+	if(igsd->buffer_offset + 1 >= igsd->buffer_size) {
+		return 1;
+	}
+
+	key_type = (enum igbinary_type) igbinary_unserialize8(igsd TSRMLS_CC);	
+
+	/* the igbinary_unserialize_chararray adds the string to the strings table, but we nuke the strings table below */
+	if(igbinary_unserialize_chararray(igsd, key_type, &dictname, &dictname_len TSRMLS_CC)) {
+		return 1;
+	}
+
+	if(dictname == NULL || dictname_len == 0) {
+		return 1;
+	}
+
+	if(zend_hash_find(IGBINARY_G(dict_hash), dictname, dictname_len, (void**)&pdict) == FAILURE) {
+		return 1;
+	}
+
+	dict = *pdict;
+
+	if(dict->checksum != checksum) {
+		zend_error(E_WARNING, "igbinary dictionary checksum mismatch - different dictionaries used to serialize (expected=0x%x)", checksum);
+		return 1;
+	}
+
+	igsd->strings_count = dict->strings_count;
+	igsd->strings_capacity += dict->strings_count;
+	igsd->strings = erealloc(igsd->strings, sizeof(struct igbinary_unserialize_string_pair) * igsd->strings_capacity);
+	memcpy(igsd->strings, dict->strings, sizeof(struct igbinary_unserialize_string_pair) * dict->strings_count);
+	//fprintf(stderr, "Adding %d strings from %s\n", igsd->strings_count, dictname);
+	return 0;
+}
+/* }}} */
+
 /* {{{ igbinary_unserialize_header */
 /** Unserialize header. Check for version. */
 inline static int igbinary_unserialize_header(struct igbinary_unserialize_data *igsd TSRMLS_DC) {
@@ -1321,11 +1732,13 @@ inline static int igbinary_unserialize_header(struct igbinary_unserialize_data *
 
 	version = igbinary_unserialize32(igsd TSRMLS_CC);
 
+	igsd->version = version;
+
 	/* Support older version 1 and the current format 2 */
-	if (version == IGBINARY_FORMAT_VERSION || version == 0x00000001) {
+	if (version == IGBINARY_FORMAT_VERSION || version == IGBINARY_FORMAT_SHARED_DICTIONARY || version == 0x00000001) {
 		return 0;
 	} else {
-		zend_error(E_WARNING, "igbinary_unserialize_header: unsupported version: %u, should be %u or %u", (unsigned int) version, 0x00000001, (unsigned int) IGBINARY_FORMAT_VERSION);
+		zend_error(E_WARNING, "igbinary_unserialize_header: unsupported version: %u, should be %u, %u or %u", (unsigned int) version, 0x00000001, (unsigned int) IGBINARY_FORMAT_VERSION, (unsigned int) IGBINARY_FORMAT_SHARED_DICTIONARY);
 		return 1;
 	}
 }
