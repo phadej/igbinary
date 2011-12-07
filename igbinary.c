@@ -124,6 +124,7 @@ struct igbinary_serialize_data {
 	struct hash_si strings;		/**< Hash of already serialized strings. */
 	struct hash_si objects;		/**< Hash of already serialized objects. */
 	int string_count;			/**< Serialized string count, used for back referencing */
+	struct hash_si *dictionary;	/**< Hash of built-in dictionary strings (read-only) */
 	int error;					/**< Error number. Not used. */
 };
 
@@ -167,6 +168,7 @@ struct igbinary_shared_dictionary {
 	uint32_t checksum;
 	size_t strings_count; /**< Unserialized string count. */
 	struct igbinary_unserialize_string_pair *strings; /**< Unserialized strings. */
+	struct hash_si dictionary;
 };
 /* }}} */
 
@@ -197,6 +199,8 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 inline static int igbinary_serialize_object(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
 
 static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z TSRMLS_DC);
+
+inline static int igbinary_serialize_find_string(struct igbinary_serialize_data *igsd, const char *key, size_t key_len, uint32_t * value TSRMLS_DC);
 /* }}} */
 /* {{{ Unserializing functions prototypes */
 inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_data *igsd TSRMLS_DC);
@@ -396,6 +400,18 @@ static int igbinary_extract_dictionary(uint8_t *buffer, size_t buffer_size, stru
 	dict->strings = pemalloc(sizeof(struct igbinary_unserialize_string_pair) * igsd.strings_count, 1);
 	/* since this is tied to the igsd->buffer, we keep track of dict->data and we're good on string allocs */
 	memcpy(dict->strings, igsd.strings, sizeof(struct igbinary_unserialize_string_pair) * igsd.strings_count);
+
+	/* we can hash it upwards to avoid allocations */
+	hash_si_init(&dict->dictionary, dict->strings_count); 
+
+	if(dict && dict->strings != NULL) {
+		int i;
+		struct igbinary_unserialize_string_pair *pair = NULL;
+		for(i =0; i < dict->strings_count; i++) {
+			pair = &dict->strings[i];
+			hash_si_insert(&dict->dictionary, pair->data, pair->len, i);
+		}
+	}
 
 	if(v) {
 		zval_ptr_dtor(&v);
@@ -895,6 +911,8 @@ inline static int igbinary_serialize_data_init(struct igbinary_serialize_data *i
 		hash_si_init(&igsd->objects, 16);
 	}
 
+	igsd->dictionary = NULL;
+
 	igsd->compact_strings = (bool)IGBINARY_G(compact_strings);
 
 	return r;
@@ -906,6 +924,8 @@ inline static void igbinary_serialize_data_deinit(struct igbinary_serialize_data
 	if (igsd->buffer) {
 		efree(igsd->buffer);
 	}
+
+	igsd->dictionary = NULL;
 
 	if (!igsd->scalar) {
 		hash_si_deinit(&igsd->strings);
@@ -919,7 +939,6 @@ inline static void igbinary_serialize_data_deinit(struct igbinary_serialize_data
 inline static int igbinary_serialize_dict_init(struct igbinary_serialize_data *igsd, const char *dictname TSRMLS_DC) {
 	struct igbinary_shared_dictionary **pdict = NULL;
 	struct igbinary_shared_dictionary *dict = NULL;
-	struct igbinary_unserialize_string_pair *pair = NULL;
 	if(igsd->version != IGBINARY_FORMAT_SHARED_DICTIONARY) {
 		return 0; /* no worries */
 	}
@@ -932,14 +951,8 @@ inline static int igbinary_serialize_dict_init(struct igbinary_serialize_data *i
 	/* add it to the strings hash */
 	dict = *pdict;
 	//fprintf(stderr, "dict (%p) (%d)\n", dict, dict->strings_count);
-	if(dict && dict->strings != NULL) {
-		int i;
-		for(i =0; i < dict->strings_count; i++) {
-			pair = &dict->strings[i];
-			hash_si_insert(&igsd->strings, pair->data, pair->len, i);
-		}
-		igsd->string_count = dict->strings_count;
-	}
+	igsd->dictionary = &dict->dictionary;
+	igsd->string_count = dict->strings_count;
 	igbinary_serialize32(igsd, (uint32_t)IGBINARY_LOAD_DICT TSRMLS_CC);
 	igbinary_serialize32(igsd, (uint32_t)dict->checksum TSRMLS_CC);
 	igbinary_serialize_chararray(igsd, dictname, strlen(dictname) TSRMLS_CC);
@@ -1115,7 +1128,7 @@ inline static int igbinary_serialize_string(struct igbinary_serialize_data *igsd
 		return 0;
 	}
 
-	if (igsd->scalar || !igsd->compact_strings || hash_si_find(&igsd->strings, s, len, i) == 1) {
+	if (igbinary_serialize_find_string(igsd, s, len, i TSRMLS_CC) == 1) {
 		if (!igsd->scalar && igsd->compact_strings) {
 			hash_si_insert(&igsd->strings, s, len, igsd->string_count);
 		}
@@ -1414,7 +1427,7 @@ inline static int igbinary_serialize_object_name(struct igbinary_serialize_data 
 	uint32_t t;
 	uint32_t *i = &t;
 
-	if (hash_si_find(&igsd->strings, class_name, name_len, i) == 1) {
+	if (igbinary_serialize_find_string(igsd, class_name, name_len, i TSRMLS_CC) == 1) {
 		hash_si_insert(&igsd->strings, class_name, name_len, igsd->string_count);
 		igsd->string_count += 1;
 
@@ -1608,6 +1621,24 @@ static int igbinary_serialize_zval(struct igbinary_serialize_data *igsd, zval *z
 	return 0;
 }
 /* }}} */
+
+/* {{{ igbinary_serialize_find_string */
+inline static int igbinary_serialize_find_string(struct igbinary_serialize_data *igsd, const char *s, size_t len, uint32_t *i TSRMLS_DC) {
+	if (igsd->scalar || !igsd->compact_strings) {
+		return 1;
+	}
+	if(hash_si_find(&igsd->strings, s, len, i) == 0) {
+		return 0;
+	}
+	if(igsd->dictionary != NULL) {
+		if(hash_si_find(igsd->dictionary, s, len, i) == 0) {
+			return 0;
+		}
+	}
+	return 1;
+}
+/* }}} */
+
 /* {{{ igbinary_unserialize_data_init */
 /** Inits igbinary_unserialize_data_init. */
 inline static int igbinary_unserialize_data_init(struct igbinary_unserialize_data *igsd TSRMLS_DC) {
