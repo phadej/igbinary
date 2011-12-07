@@ -58,6 +58,9 @@ PHP_FUNCTION(igbinary_serialize);
  */
 PHP_FUNCTION(igbinary_unserialize);
 
+/** string igbinary_serialize_custom(mixed value [,string dictionary]).
+ * Serializes the given value with a custom dictionary.
+ */
 PHP_FUNCTION(igbinary_serialize_custom);
 
 #ifdef ZTS
@@ -69,7 +72,7 @@ PHP_FUNCTION(igbinary_serialize_custom);
 /** Binary protocol version of igbinary. */
 #define IGBINARY_FORMAT_VERSION 0x00000002
 
-/** Add new binaru protocol for Shared Dictionary Compression */
+/** Add new binary protocol for Shared Dictionary Compression */
 #define IGBINARY_FORMAT_SHARED_DICTIONARY 0x00000003
 #define IGBINARY_LOAD_DICT 42
 

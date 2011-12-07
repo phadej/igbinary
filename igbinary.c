@@ -44,6 +44,7 @@
 
 
 #include <stddef.h>
+#include "hash_function.h"
 #include "hash.h"
 
 /** Session serializer function prototypes. */
@@ -161,9 +162,9 @@ struct igbinary_unserialize_data {
 
 /** Shared dictionary structure.
  */
-/* {{{ */
+/* {{{ struct igbinary_shared_dictionary */
 struct igbinary_shared_dictionary {
-	char *data;
+	uint8_t *data;
 	size_t data_len;
 	uint32_t checksum;
 	size_t strings_count; /**< Unserialized string count. */
@@ -298,8 +299,8 @@ ZEND_GET_MODULE(igbinary)
 /* {{{ INI entries */
 PHP_INI_BEGIN()
 	STD_PHP_INI_BOOLEAN("igbinary.compact_strings", "1", PHP_INI_ALL, OnUpdateBool, compact_strings, zend_igbinary_globals, igbinary_globals)
-	STD_PHP_INI_BOOLEAN("igbinary.dictionaries", "", PHP_INI_SYSTEM, OnUpdateString, dictionaries, zend_igbinary_globals, igbinary_globals)
-	STD_PHP_INI_BOOLEAN("igbinary.default_dictionary", NULL, PHP_INI_SYSTEM, OnUpdateString, default_dictionary, zend_igbinary_globals, igbinary_globals)
+	STD_PHP_INI_ENTRY  ("igbinary.dictionaries", "", PHP_INI_SYSTEM, OnUpdateString, dictionaries, zend_igbinary_globals, igbinary_globals)
+	STD_PHP_INI_ENTRY  ("igbinary.default_dictionary", NULL, PHP_INI_SYSTEM, OnUpdateString, default_dictionary, zend_igbinary_globals, igbinary_globals)
 PHP_INI_END()
 /* }}} */
 
@@ -312,7 +313,7 @@ static void php_igbinary_init_globals(zend_igbinary_globals *igbinary_globals) {
 }
 /* }}} */
 
-/* {{{ */
+/* {{{ igbinary_walk_dir */
 /* I borrowed this from pecl/hidef and swapped over the retvals (0->1, 1->0), 
  * ensure all bug-fixes there propogate here */
 typedef int (*igbinary_walk_dir_cb)(const char* filename TSRMLS_DC);
@@ -359,7 +360,18 @@ cleanup:
 }
 /* }}} */
 
-/* {{{ */
+/* {{{ igbinary_shared_dictionary_free */
+static void igbinary_shared_dictionary_free(void *p) 
+{
+	struct igbinary_shared_dictionary *dict = *(struct igbinary_shared_dictionary**)p;
+
+	hash_si_deinit(&dict->dictionary);
+	pefree(dict->strings, 1);
+	pefree(dict->data, 1);
+}
+/* }}} */
+
+/* {{{ igbinary_extract_dictionary */
 static int igbinary_extract_dictionary(uint8_t *buffer, size_t buffer_size, struct igbinary_shared_dictionary *dict TSRMLS_DC)
 {
 	struct igbinary_unserialize_data igsd;
@@ -421,7 +433,7 @@ static int igbinary_extract_dictionary(uint8_t *buffer, size_t buffer_size, stru
 	return 0;
 }
 /* }}} */
-/* {{{ */
+/* {{{ igbinary_add_dictionary */
 static int igbinary_add_dictionary(const char *path TSRMLS_DC)
 {
 	char *p;
@@ -505,21 +517,30 @@ static int igbinary_add_dictionary(const char *path TSRMLS_DC)
 }
 /* }}} */
 
-/* {{{ */
+/* {{{ igbinary_load_dictionaries */
 static int igbinary_load_dictionaries(TSRMLS_D)
 {
 	const char *dict_path = NULL;
 
-	if(IGBINARY_G(dictionaries)) 
-	{
+	if(IGBINARY_G(dictionaries))  {
 		dict_path = IGBINARY_G(dictionaries);
 	}
-	else
-	{
+	else {
 		return 0;
 	}
 
 	return igbinary_walk_dir(dict_path, ".dct", igbinary_add_dictionary TSRMLS_CC);
+}
+/* }}} */
+
+/* {{{ igbinary_unload_dictionaries */
+static void igbinary_unload_dictionaries(TSRMLS_D)
+{
+	if(IGBINARY_G(dict_hash)) {
+		zend_hash_destroy(IGBINARY_G(dict_hash));
+		pefree(IGBINARY_G(dict_hash), 1);
+		IGBINARY_G(dict_hash) = NULL;
+	}
 }
 /* }}} */
 
@@ -545,7 +566,7 @@ PHP_MINIT_FUNCTION(igbinary) {
 	REGISTER_INI_ENTRIES();
 
 	IGBINARY_G(dict_hash) = pemalloc(sizeof(HashTable), 1);
-	zend_hash_init(IGBINARY_G(dict_hash), 	  32,  NULL, NULL /*igbinary_shared_dictionary_free*/, 1);
+	zend_hash_init(IGBINARY_G(dict_hash), 	  32,  NULL, igbinary_shared_dictionary_free, 1);
 
 	igbinary_load_dictionaries(TSRMLS_C);
 
@@ -560,6 +581,8 @@ PHP_MSHUTDOWN_FUNCTION(igbinary) {
 #ifdef ZTS
 	ts_free_id(igbinary_globals_id);
 #endif
+
+	igbinary_unload_dictionaries(TSRMLS_C);
 
 	/*
 	 * unregister serializer?
@@ -646,7 +669,7 @@ IGBINARY_API int igbinary_unserialize(const uint8_t *buf, size_t buf_len, zval *
 /* }}} */
 
 /* {{{ int igbinary_serialize_custom(uint8_t**, size_t*, zval*, char*) */
-IGBINARY_API int igbinary_serialize_custom(uint8_t **ret, size_t *ret_len, zval *z, char *dictname TSRMLS_DC) {
+static int igbinary_serialize_custom(uint8_t **ret, size_t *ret_len, zval *z, char *dictname TSRMLS_DC) {
 	struct igbinary_serialize_data igsd;
 
 	if (igbinary_serialize_data_init(&igsd, Z_TYPE_P(z) != IS_OBJECT && Z_TYPE_P(z) != IS_ARRAY TSRMLS_CC)) {
@@ -736,8 +759,8 @@ PHP_FUNCTION(igbinary_serialize_custom) {
 	zval *z;
 	uint8_t *string;
 	size_t string_len;
-	char *dictname;
-	int dictname_len;
+	char *dictname = NULL;
+	int dictname_len = 0;
 
 	(void) return_value_ptr;
 	(void) this_ptr;
