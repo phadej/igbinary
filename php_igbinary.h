@@ -1,6 +1,11 @@
 /*
- * Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>
- */
+  +----------------------------------------------------------------------+
+  | See COPYING file for further copyright information                   |
+  +----------------------------------------------------------------------+ 
+  | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
+  | See CREDITS for contributors                                         |
+  +----------------------------------------------------------------------+ 
+*/
 
 #ifndef PHP_IGBINARY_H
 #define PHP_IGBINARY_H
@@ -17,6 +22,9 @@ extern zend_module_entry igbinary_module_entry;
 
 ZEND_BEGIN_MODULE_GLOBALS(igbinary)
 	zend_bool compact_strings;
+	char *dictionaries;				/* search path for dictionary files */
+	char *default_dictionary;	/* search path for the data files */
+	HashTable *dict_hash;			/* mmaped list for the dict hashes */
 ZEND_END_MODULE_GLOBALS(igbinary)
 
 #ifdef ZTS
@@ -50,6 +58,11 @@ PHP_FUNCTION(igbinary_serialize);
  */
 PHP_FUNCTION(igbinary_unserialize);
 
+/** string igbinary_serialize_custom(mixed value [,string dictionary]).
+ * Serializes the given value with a custom dictionary.
+ */
+PHP_FUNCTION(igbinary_serialize_custom);
+
 #ifdef ZTS
 #define IGBINARY_G(v) TSRMG(igbinary_globals_id, zend_igbinary_globals *, v)
 #else
@@ -58,6 +71,10 @@ PHP_FUNCTION(igbinary_unserialize);
 
 /** Binary protocol version of igbinary. */
 #define IGBINARY_FORMAT_VERSION 0x00000002
+
+/** Add new binary protocol for Shared Dictionary Compression */
+#define IGBINARY_FORMAT_SHARED_DICTIONARY 0x00000003
+#define IGBINARY_LOAD_DICT 42
 
 /** Backport macros from php 5.3 */
 #ifndef Z_ISREF_P

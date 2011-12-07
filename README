@@ -3,16 +3,18 @@ igbinary
 
 Igbinary is a drop in replacement for the standard php serializer. Instead of
 time and space consuming textual representation, igbinary stores php data
-structures in a compact binary form. Savings are significant when using
-memcached or similar memory based storages for serialized data. You can
-expect about 50% reduction in storage requirement and speed is at least on par
-with the standard PHP serializer. Specific numbers depend on your data, of
-course.
+structures in compact binary form. Savings are significant when using
+memcached or similar memory based storages for serialized data. About 50%
+reduction in storage requirement can be expected. Specific number depends on
+your data.
 
-But where does the name "igbinary" come from? There was once a similar project
-called fbinary but it has disappeared from the Internet a long time ago. Its
-architecture wasn't particularly clean either. IG is an abbreviation for a
-finnish social networking site IRC-Galleria (http://irc-galleria.net/)
+Unserialization performance is at least on par with the standard PHP serializer.
+Serialization performance depends on the "compact_strings" option which enables
+duplicate string tracking. String are inserted to a hash table which adds some
+overhead. In usual scenarios this does not have much significance since usage
+pattern is "serialize rarely, unserialize often". With "compact_strings"
+option igbinary is usually a bit slower than the standard serializer. Without
+it, a bit faster.
 
 Features
 --------
@@ -23,8 +25,9 @@ Features
 - ``__sleep`` & ``__wakeup``
 - Serializable -interface
 - Data portability between platforms (32/64bit, endianess)
-- Tested on Linux amd64, Mac OSX x86, HP-UX PA-RISC and NetBSD sparc64
-- Compatible with PHP5 (tested with 5.2.4 and 5.2.5)
+- Tested on Linux amd64, Linux ARM, Mac OSX x86, HP-UX PA-RISC and NetBSD sparc64
+- Hooks up to APC opcode cache as a serialization handler (APC 3.1.7+)
+- Compatible with PHP 5.2 and 5.3
 
 Implementation details
 ----------------------
@@ -40,8 +43,8 @@ reasons in order of significance are (at least in our applications):
 Igbinary uses two specific strategies to minimize the size of the serialized
 output.
 
-1. Strings are stored only once by using a hash table. Arrays of associate
-   arrays with very verbose keys are stored very compactly.
+1. Repetitive strings are stored only once. Collections of objects benefit
+   significantly from this. See "compact_strings" option.
 
 2. Numerical values are stored in the smallest primitive data type
    available:
@@ -50,7 +53,7 @@ output.
    *123456* = ``int32_t``
    ... and so on.
 
-3. Well, it is not human readable ;)
+3. ( Well, it is not human readable ;)
 
 How to use
 ----------
@@ -63,6 +66,13 @@ Add the following lines to your php.ini:
   # Use igbinary as session serializer
   session.serialize_handler=igbinary
 
+  # Enable or disable compacting of duplicate strings
+  # The default is On.
+  igbinary.compact_strings=On
+
+  # Use igbinary as serializer in APC cache (3.1.7 or later)
+  ;apc.serializer=igbinary
+
 .. and in your php code replace serialize and unserialize function calls
 with ``igbinary_serialize`` and ``igbinary_unserialize``.
 
@@ -70,41 +80,48 @@ Installing
 ----------
 
 Note:
-Sometimes you may have to substitute phpize with phpize5.
-In such cases you probably should add "--with-php-config=.../php-config5" as
-an option to configure script.
-
-Compiling:
+Sometimes phpize must be substituted with phpize5. In such cases the following
+option must be given to configure script: "--with-php-config=.../php-config5" 
 
 1. phpize
 
-If you use GCC:
+With GCC:
 2. ./configure CFLAGS="-O2 -g" --enable-igbinary
 
-If you use ICC (Intel C Compiler)
+With ICC (Intel C Compiler)
 2. ./configure CFLAGS=" -no-prec-div -O3 -xO -unroll2 -g" CC=icc --enable-igbinary
 
 3. make
-4. ( make test)
+4. ( make test )
 5. make install
-6. igbinary.so is installed in the default extensions directory
+6. igbinary.so is installed to the default extension directory
 
 Bugs & Contributions
 --------------------
 
-To report bugs or to contribute fixes and improvements send email to
-opensource@dynamoid.com
+Mailing list for bug reports and other development discussion can be found
+at http://groups.google.com/group/igbinary
 
-You can also fork at GitHub: http://github.com/dynamoid/igbinary
+The preferred ways for contributions are pull requests and email patches
+(in git format). Feel free to fork at http://github.com/igbinary/igbinary
 
 Utilizing in other extensions
 -----------------------------
 
-You can call igbinary from other extensions fairly easily. Igbinary installs its
-header file to ext/igbinary/igbinary.h. There are just two straighforward
+Igbinary can be called from other extensions fairly easily. Igbinary installs
+its header file to ext/igbinary/igbinary.h. There are just two straighforward
 functions: igbinary_serialize and igbinary_unserialize. Look at igbinary.h for
 prototypes and usage.
 
 Add PHP_ADD_EXTENSION_DEP(yourextension, igbinary) to your config.m4 in case
 someone wants to compile both of them statically into php.
+
+Trivia
+------
+
+Where does the name "igbinary" come from? There was once a similar project
+called fbinary but it has disappeared from the Internet a long time ago. Its
+architecture wasn't particularly clean either. IG is an abbreviation for a
+finnish social networking site IRC-Galleria (http://irc-galleria.net/)
+
 

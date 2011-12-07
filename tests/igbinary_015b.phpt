@@ -2,12 +2,13 @@
 Check for serialization handler, ini-directive
 --SKIPIF--
 --INI--
-session.serialize_handler=igbinary
 --FILE--
 <?php 
 if(!extension_loaded('igbinary')) {
 	dl('igbinary.' . PHP_SHLIB_SUFFIX);
 }
+
+ini_set('session.serialize_handler', 'igbinary');
 
 $output = '';
 
