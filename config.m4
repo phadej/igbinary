@@ -49,4 +49,5 @@ if test "$PHP_IGBINARY" != "no"; then
 
   PHP_INSTALL_HEADERS([ext/igbinary], [igbinary.h])
   PHP_NEW_EXTENSION(igbinary, igbinary.c hash_si.c hash_function.c, $ext_shared,, $PHP_IGBINARY_CFLAGS)
+  PHP_ADD_EXTENSION_DEP(igbinary, session, true)
 fi

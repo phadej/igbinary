@@ -1,10 +1,10 @@
 /*
   +----------------------------------------------------------------------+
   | See COPYING file for further copyright information                   |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
   | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
   | See CREDITS for contributors                                         |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
 */
 
 #ifdef HAVE_CONFIG_H
@@ -20,9 +20,15 @@
 #include "zend_dynamic_array.h"
 #include "zend_alloc.h"
 #include "ext/standard/info.h"
-#include "ext/session/php_session.h"
+#include "ext/standard/php_var.h"
+
+#if HAVE_PHP_SESSION
+# include "ext/session/php_session.h"
+#endif /* HAVE_PHP_SESSION */
+
 #include "ext/standard/php_incomplete_class.h"
-#ifdef HAVE_APC_SUPPORT 
+
+#ifdef HAVE_APC_SUPPORT
 # if USE_BUNDLED_APC
 #  include "apc_serializer.h"
 # else
@@ -45,8 +51,10 @@
 #include <stddef.h>
 #include "hash.h"
 
+#if HAVE_PHP_SESSION
 /** Session serializer function prototypes. */
 PS_SERIALIZER_FUNCS(igbinary);
+#endif /* HAVE_PHP_SESSION */
 
 #ifdef HAVE_APC_SUPPORT
 /** Apc serializer function prototypes */
@@ -225,7 +233,9 @@ zend_function_entry igbinary_functions[] = {
 #if ZEND_MODULE_API_NO >= 20050922
 static const zend_module_dep igbinary_module_deps[] = {
 	ZEND_MOD_REQUIRED("standard")
+#ifdef HAVE_PHP_SESSION
 	ZEND_MOD_REQUIRED("session")
+#endif
 #ifdef HAVE_APC_SUPPORT
 	ZEND_MOD_OPTIONAL("apc")
 #endif
@@ -327,6 +337,11 @@ PHP_MINFO_FUNCTION(igbinary) {
 	php_info_print_table_row(2, "igbinary APC serializer ABI", APC_SERIALIZER_ABI);
 #else
 	php_info_print_table_row(2, "igbinary APC serializer ABI", "no");
+#endif
+#if HAVE_PHP_SESSION
+	php_info_print_table_row(2, "igbinary session support", "yes");
+#else
+	php_info_print_table_row(2, "igbinary session support", "no");
 #endif
 	php_info_print_table_end();
 
@@ -432,6 +447,7 @@ PHP_FUNCTION(igbinary_serialize) {
 	RETVAL_STRINGL((char *)string, string_len, 0);
 }
 /* }}} */
+#ifdef HAVE_PHP_SESSION
 /* {{{ Serializer encode function */
 PS_SERIALIZER_ENCODE_FUNC(igbinary)
 {
@@ -530,6 +546,7 @@ PS_SERIALIZER_DECODE_FUNC(igbinary) {
 	return SUCCESS;
 }
 /* }}} */
+#endif /* HAVE_PHP_SESSION */
 
 #ifdef HAVE_APC_SUPPORT
 /* {{{ apc_serialize function */
@@ -1995,7 +2012,7 @@ inline static int igbinary_unserialize_object_ser(struct igbinary_unserialize_da
 	}
 
 	PHP_VAR_UNSERIALIZE_INIT(var_hash);
-	ret = ce->unserialize(z, ce, 
+	ret = ce->unserialize(z, ce,
 		(const unsigned char*)(igsd->buffer + igsd->buffer_offset), n,
 		(zend_unserialize_data *)&var_hash TSRMLS_CC);
 	PHP_VAR_UNSERIALIZE_DESTROY(var_hash);
