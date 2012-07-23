@@ -378,6 +378,7 @@ IGBINARY_API int igbinary_serialize(uint8_t **ret, size_t *ret_len, zval *z TSRM
 /* {{{ int igbinary_serialize_ex(uint8_t**, size_t*, zval*, igbinary_memory_manager*) */
 IGBINARY_API int igbinary_serialize_ex(uint8_t **ret, size_t *ret_len, zval *z, struct igbinary_memory_manager *memory_manager TSRMLS_DC) {
 	struct igbinary_serialize_data igsd;
+	uint8_t *tmpbuf;
 
 	if (igbinary_serialize_data_init(&igsd, Z_TYPE_P(z) != IS_OBJECT && Z_TYPE_P(z) != IS_ARRAY, memory_manager TSRMLS_CC)) {
 		zend_error(E_WARNING, "igbinary_serialize: cannot init igsd");
@@ -399,6 +400,12 @@ IGBINARY_API int igbinary_serialize_ex(uint8_t **ret, size_t *ret_len, zval *z, 
 	if (igbinary_serialize8(&igsd, 0 TSRMLS_CC) != 0) {
 		igbinary_serialize_data_deinit(&igsd, 1 TSRMLS_CC);
 		return 1;
+	}
+
+	/* shrink buffer to the real length, ignore errors */
+	tmpbuf = (uint8_t *) igsd.mm.realloc(igsd.buffer, igsd.buffer_size, igsd.mm.context);
+	if (tmpbuf != NULL) {
+		igsd.buffer = tmpbuf;
 	}
 
 	/* Set return values */
@@ -483,7 +490,7 @@ PHP_FUNCTION(igbinary_serialize) {
 PS_SERIALIZER_ENCODE_FUNC(igbinary)
 {
 	struct igbinary_serialize_data igsd;
-	char *s;
+	uint8_t *tmpbuf;
 
 	if (igbinary_serialize_data_init(&igsd, false, NULL TSRMLS_CC)) {
 		zend_error(E_WARNING, "igbinary_serialize: cannot init igsd");
@@ -501,17 +508,23 @@ PS_SERIALIZER_ENCODE_FUNC(igbinary)
 		return FAILURE;
 	}
 
-	s = estrndup((char*)igsd.buffer, igsd.buffer_size);
-	if (s == NULL) {
+	if (igbinary_serialize8(&igsd, 0 TSRMLS_CC) != 0) {
+		igbinary_serialize_data_deinit(&igsd, 1 TSRMLS_CC);
 		return FAILURE;
 	}
 
-	*newstr = s;
-	if (newlen) {
-		*newlen = igsd.buffer_size;
+	/* shrink buffer to the real length, ignore errors */
+	tmpbuf = (uint8_t *)igsd.mm.realloc(igsd.buffer, igsd.buffer_size, igsd.mm.context);
+	if (tmpbuf != NULL) {
+		igsd.buffer = tmpbuf;
 	}
 
-	igbinary_serialize_data_deinit(&igsd, 1 TSRMLS_CC);
+	*newstr = (char *)igsd.buffer;
+	if (newlen) {
+		*newlen = igsd.buffer_size - 1;
+	}
+
+	igbinary_serialize_data_deinit(&igsd, 0 TSRMLS_CC);
 
 	return SUCCESS;
 }
