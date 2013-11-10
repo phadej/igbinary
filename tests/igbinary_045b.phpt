@@ -1,18 +1,18 @@
 --TEST--
-APC serializer registration
+APCu serializer registration
 --SKIPIF--
 <?php
-if (!extension_loaded('apc')) {
-	echo "skip APC not loaded";
+if (!extension_loaded('apcu')) {
+	echo "skip APCu not loaded";
 }
 
-$ext = new ReflectionExtension('apc');
-if (version_compare($ext->getVersion(), '3.1.7', '<')) {
-	echo "skip require APC version 3.1.7 or above";
+$ext = new ReflectionExtension('apcu');
+if (version_compare($ext->getVersion(), '4.0.2', '<')) {
+	echo "skip require APCu version 4.0.2 or above";
 }
 
 --INI--
-extension=apc.so
+extension=apcu.so
 apc.enable_cli=1
 apc.serializer=igbinary
 --FILE--

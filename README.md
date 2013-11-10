@@ -93,6 +93,19 @@ option must be given to configure script: "--with-php-config=.../php-config5"
 5. `make install`
 6. igbinary.so is installed to the default extension directory
 
+### To run APCu test
+
+```
+# go to modules directory
+cd modules
+
+# ... and create symlink to apcu extension
+# it will be loaded during test suite
+/opt/lib/php/extensions/no-debug-non-zts-20121212/apcu.so
+```
+
+Similar approach should work for APC.
+
 Bugs & Contributions
 --------------------
 
