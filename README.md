@@ -60,17 +60,17 @@ How to use
 
 Add the following lines to your php.ini:
 
-    # Load igbinary extension
+    ; Load igbinary extension
     extension=igbinary.so
 
-    # Use igbinary as session serializer
+    ; Use igbinary as session serializer
     session.serialize_handler=igbinary
 
-    # Enable or disable compacting of duplicate strings
-    # The default is On.
+    ; Enable or disable compacting of duplicate strings
+    ; The default is On.
     igbinary.compact_strings=On
 
-    # Use igbinary as serializer in APC cache (3.1.7 or later)
+    ; Use igbinary as serializer in APC cache (3.1.7 or later)
     ;apc.serializer=igbinary
 
 .. and in your php code replace serialize and unserialize function calls
