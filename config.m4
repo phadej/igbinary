@@ -13,7 +13,7 @@ dnl [  --with-igbinary             Include igbinary support])
 dnl Otherwise use enable:
 
 PHP_ARG_ENABLE(igbinary, whether to enable igbinary support,
-	[  --enable-igbinary          Enable igbinary support])
+  [  --enable-igbinary          Enable igbinary support])
 
 if test "$PHP_IGBINARY" != "no"; then
   AC_CHECK_HEADERS([stdbool.h],, AC_MSG_ERROR([stdbool.h not exists]))
@@ -22,17 +22,17 @@ if test "$PHP_IGBINARY" != "no"; then
 
   AC_MSG_CHECKING([for APC/APCU includes])
   if test -f "$phpincludedir/ext/apcu/apc_serializer.h"; then
-	apc_inc_path="$phpincludedir"
-	AC_MSG_RESULT([APCU in $apc_inc_path])
-	AC_DEFINE(HAVE_APCU_SUPPORT,1,[Whether to enable apcu support])
+    apc_inc_path="$phpincludedir"
+    AC_MSG_RESULT([APCU in $apc_inc_path])
+    AC_DEFINE(HAVE_APCU_SUPPORT,1,[Whether to enable apcu support])
   elif test -f "$phpincludedir/ext/apc/apc_serializer.h"; then
-	apc_inc_path="$phpincludedir"
-	AC_MSG_RESULT([APC in $apc_inc_path])
-	AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+    apc_inc_path="$phpincludedir"
+    AC_MSG_RESULT([APC in $apc_inc_path])
+    AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
   elif test -f "${srcdir}/apc_serializer.h"; then
-  	AC_MSG_RESULT([apc_serializer.h bundled])
-	AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
-	AC_DEFINE(USE_BUNDLED_APC,1,[Whether to use bundled apc includes])
+    AC_MSG_RESULT([apc_serializer.h bundled])
+    AC_DEFINE(HAVE_APC_SUPPORT,1,[Whether to enable apc support])
+    AC_DEFINE(USE_BUNDLED_APC,1,[Whether to use bundled apc includes])
   else
     AC_MSG_RESULT([not found])
   fi
@@ -40,16 +40,25 @@ if test "$PHP_IGBINARY" != "no"; then
   AC_CHECK_SIZEOF([long])
 
   dnl GCC
-	AC_MSG_CHECKING(compiler type)
-	if test ! -z "`$CC --version | grep -i GCC`"; then
-	  AC_MSG_RESULT(gcc)
-		PHP_IGBINARY_CFLAGS="-Wall -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
-	elif test ! -z "`$CC --version | grep -i ICC`"; then
-	  AC_MSG_RESULT(icc)
-		PHP_IGBINARY_CFLAGS="-no-prec-div -O3 -x0 -unroll2"
-	else
-	  AC_MSG_RESULT(other)
-	fi
+  AC_MSG_CHECKING(compiler type)
+  if test ! -z "`$CC --version | grep -i GCC`"; then
+    AC_MSG_RESULT(gcc)
+    if test -z "`echo $CFLAGS | grep -- -O0`"; then
+      PHP_IGBINARY_CFLAGS="-Wall -Wpointer-arith -Wmissing-prototypes -Wstrict-prototypes -Wcast-align -Wshadow -Wwrite-strings -Wswitch -Winline -finline-limit=10000 --param large-function-growth=10000 --param inline-unit-growth=10000"
+    fi
+  elif test ! -z "`$CC --version | grep -i ICC`"; then
+    AC_MSG_RESULT(icc)
+    if test -z "`echo $CFLAGS | grep -- -O0`"; then
+      PHP_IGBINARY_CFLAGS="-no-prec-div -O3 -x0 -unroll2"
+    fi
+  elif test ! -z "`$CC --version | grep -i CLANG`"; then
+    AC_MSG_RESULT(clang)
+    if test -z "`echo $CFLAGS | grep -- -O0`"; then
+      PHP_IGBINARY_CFLAGS="-Wall -O2"
+    fi
+  else
+    AC_MSG_RESULT(other)
+  fi
 
   PHP_ADD_MAKEFILE_FRAGMENT(Makefile.bench)
   PHP_INSTALL_HEADERS([ext/igbinary], [igbinary.h])
