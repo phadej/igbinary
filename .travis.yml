@@ -10,8 +10,10 @@ env:
   - CC=clang   CFLAGS="-g -O0"
   - CC=gcc-4.6 CFLAGS=""
   - CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
+  - CC=gcc-4.6 CFLAGS="-g" VALGRIND=1
 
-before_script:
+install:
+  - if [ "$VALGRIND" -eq 1 ]; then sudo apt-get install valgrind; export TEST_PHP_ARGS="-m"; fi
   - sudo apt-get install $CC
   - $CC --version
 
