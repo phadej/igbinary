@@ -1,10 +1,10 @@
 /*
   +----------------------------------------------------------------------+
   | See COPYING file for further copyright information                   |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
   | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
   | See CREDITS for contributors                                         |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
 */
 
 #ifndef HASH_H
@@ -85,7 +85,7 @@ int hash_si_find (struct hash_si *h, const char *key, size_t key_len, uint32_t *
 int hash_si_remove (struct hash_si *h, const char *key, size_t key_len, uint32_t * value);
 
 /** Travarses hash_si.
- * Calls traverse_function on every item. Traverse function should not modify hash 
+ * Calls traverse_function on every item. Traverse function should not modify hash
  * @param h Pointer to hash_si struct.
  * @param traverse_function Function to call on every item of hash_si.
  */

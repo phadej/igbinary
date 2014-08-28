@@ -1,10 +1,10 @@
 /*
   +----------------------------------------------------------------------+
   | See COPYING file for further copyright information                   |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
   | Author: Oleg Grenrus <oleg.grenrus@dynamoid.com>                     |
   | See CREDITS for contributors                                         |
-  +----------------------------------------------------------------------+ 
+  +----------------------------------------------------------------------+
 */
 
 #ifdef PHP_WIN32
@@ -46,14 +46,14 @@ int hash_si_init(struct hash_si *h, size_t size) {
 	}
 
 	memset(h->data, 0, sizeof(struct hash_si_pair) * size);
-	
+
 	return 0;
 }
 /* }}} */
 /* {{{ hash_si_deinit */
 void hash_si_deinit(struct hash_si *h) {
 	size_t i;
-	
+
 	for (i = 0; i < h->size; i++) {
 		if (h->data[i].key != NULL) {
 			free(h->data[i].key);
@@ -76,20 +76,20 @@ void hash_si_deinit(struct hash_si *h) {
 inline static size_t _hash_si_find(struct hash_si *h, const char *key, size_t key_len) {
 	uint32_t hv;
 	size_t size;
-	
+
 	assert(h != NULL);
-	
+
 	size = h->size;
 	hv = zend_inline_hash_func(key, key_len) & (h->size-1);
-	
+
 	while (size > 0 &&
 		h->data[hv].key != NULL &&
-		(h->data[hv].key_len != key_len || memcmp(h->data[hv].key, key, key_len) != 0)) {	
+		(h->data[hv].key_len != key_len || memcmp(h->data[hv].key, key, key_len) != 0)) {
 		/* linear prob */
 		hv = (hv + 1) & (h->size-1);
 		size--;
 	}
-	
+
 	return hv;
 }
 /* }}} */
@@ -97,9 +97,9 @@ inline static size_t _hash_si_find(struct hash_si *h, const char *key, size_t ke
 int hash_si_remove(struct hash_si *h, const char *key, size_t key_len, uint32_t *value) {
 	uint32_t hv;
 	uint32_t j, k;
-	
+
 	assert(h != NULL);
-	
+
 	hv = _hash_si_find(h, key, key_len);
 
 	/* dont exists */
@@ -108,26 +108,26 @@ int hash_si_remove(struct hash_si *h, const char *key, size_t key_len, uint32_t 
 	}
 
 	h->used--;
-		
+
 	free(h->data[hv].key);
 
-	if (value != NULL) 
+	if (value != NULL)
 		*value = h->data[hv].value;
 
-	j = (hv + 1) & (h->size-1);	
+	j = (hv + 1) & (h->size-1);
 	while (h->data[j].key != NULL) {
 		k = zend_inline_hash_func(h->data[j].key, strlen(h->data[j].key)) & (h->size-1);
 		if ((j > hv && (k <= hv || k > j)) || (j < hv && (k <= hv && k > j))) {
 			h->data[hv].key = h->data[j].key;
 			h->data[hv].key_len = h->data[j].key_len;
 			h->data[hv].value = h->data[j].value;
-		
+
 			hv = j;
 		}
-		j = (j + 1) & (h->size-1);	
+		j = (j + 1) & (h->size-1);
 	}
 	h->data[hv].key = NULL;
-		
+
 
 	return 0;
 /*
@@ -140,7 +140,7 @@ int hash_si_remove(struct hash_si *h, const char *key, size_t key_len, uint32_t 
  *			            (j < i and (k <= i and k > j)) (note 2)
  *			               slot[i] := slot[j]
  *			                i := j
- *			      mark slot[i] as unoccupied				
+ *			      mark slot[i] as unoccupied
  *
  * For all records in a cluster, there must be no vacant slots between their natural
  * hash position and their current position (else lookups will terminate before finding
@@ -166,11 +166,11 @@ inline static void hash_si_rehash(struct hash_si *h) {
 	uint32_t hv;
 	size_t i;
 	struct hash_si newh;
-		
+
 	assert(h != NULL);
-	
+
 	hash_si_init(&newh, h->size * 2);
-	
+
 	for (i = 0; i < h->size; i++) {
 		if (h->data[i].key != NULL) {
 			hv = _hash_si_find(&newh, h->data[i].key, h->data[i].key_len);
@@ -178,8 +178,8 @@ inline static void hash_si_rehash(struct hash_si *h) {
 			newh.data[hv].key_len = h->data[i].key_len;
 			newh.data[hv].value = h->data[i].value;
 		}
-	}	
-	
+	}
+
 	free(h->data);
 	h->data = newh.data;
 	h->size *= 2;
@@ -192,9 +192,9 @@ int hash_si_insert(struct hash_si *h, const char *key, size_t key_len, uint32_t 
 	if (h->size / 4 * 3 < h->used + 1) {
 		hash_si_rehash(h);
 	}
-	
+
 	hv = _hash_si_find(h, key, key_len);
-	
+
 	if (h->data[hv].key == NULL) {
 		h->data[hv].key = (char *) malloc(key_len + 1);
 		if (h->data[hv].key == NULL) {
@@ -208,9 +208,9 @@ int hash_si_insert(struct hash_si *h, const char *key, size_t key_len, uint32_t 
 	} else {
 		return 2;
 	}
-	
+
 	h->data[hv].value = value;
-	
+
 	return 0;
 }
 /* }}} */
@@ -219,9 +219,9 @@ int hash_si_find(struct hash_si *h, const char *key, size_t key_len, uint32_t *v
 	uint32_t hv;
 
 	assert(h != NULL);
-	
+
 	hv = _hash_si_find(h, key, key_len);
-	
+
 	if (h->data[hv].key == NULL) {
 		return 1;
 	} else {
@@ -235,7 +235,7 @@ void hash_si_traverse(struct hash_si *h, int (*traverse_function) (const char *k
 	size_t i;
 
 	assert(h != NULL && traverse_function != NULL);
-	
+
 	for (i = 0; i < h->size; i++) {
 		if (h->data[i].key != NULL && traverse_function(h->data[i].key, h->data[i].key_len, h->data[i].value) != 1) {
 			return;
