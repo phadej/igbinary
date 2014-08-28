@@ -1,7 +1,7 @@
 igbinary is written for IRC-Galleria by Sulake Dynamoid Oy and its employees.
 
 Author
-* Oleg Grenrus <oleg.grenrus@dynamoid.com>
+* Oleg Grenrus <oleg.grenrus@iki.fi>
 
 Contributors
 * Teddy Grenman <tricky.github@luuseri.com> (fixes, tests, docs)
@@ -10,7 +10,7 @@ Contributors
 * Mikko Koppanen (PECL and RPM spec files)
 
 Other
-* Hash functions - Bob Jenkins <bob_jenkins@burtleburtle.net>
+* Original hash functions - Bob Jenkins <bob_jenkins@burtleburtle.net>
 
 ---
 
