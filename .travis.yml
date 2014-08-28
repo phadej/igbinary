@@ -2,19 +2,25 @@ language: php
 php:
   - 5.5
   - 5.4
+  - 5.3
+  - 5.2
 
 env:
   - CC=clang   CFLAGS=""
   - CC=clang   CFLAGS="-g -O0"
   - CC=gcc-4.6 CFLAGS=""
-  - CC=gcc-4.6 CFLAGS="-g -O0"
+  - CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
+  - CC=gcc-4.6 CFLAGS="-g" VALGRIND=1
 
-before_script:
+install:
+  - if [ "$VALGRIND" -eq 1 ]; then sudo apt-get install valgrind; export TEST_PHP_ARGS="-m"; fi
   - sudo apt-get install $CC
   - $CC --version
 
 script:
   - phpize
   - ./configure --enable-igbinary
+  # Fix not failing makes in php 5.2 and 5.3
+  - perl -i -pe 's/\-\@if/\@if/' Makefile
   - make
-  - NO_INTERACTION=1 make test
+  - REPORT_EXIT_STATUS=1 NO_INTERACTION=1 make test
