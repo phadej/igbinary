@@ -9,7 +9,7 @@ env:
   - CC=clang   CFLAGS=""
   - CC=clang   CFLAGS="-g -O0"
   - CC=gcc-4.6 CFLAGS=""
-  - CC=gcc-4.6 CFLAGS="-g -O0"
+  - CC=gcc-4.6 CFLAGS="-g -O0 -fstack-protector -fstack-protector-all"
 
 before_script:
   - sudo apt-get install $CC
