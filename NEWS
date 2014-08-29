@@ -1,3 +1,7 @@
+1.2.1 2014-08-29
+========
+* Compatible with PHP 5.2 - 5.6
+
 1.2.0 2014-08-28
 ========
 * PECL bug #22614, igbinary_unserialize(FALSE) must return FALSE

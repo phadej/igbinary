@@ -25,10 +25,10 @@
   <email>teddy.pecl@luuseri.com</email>
   <active>yes</active>
  </lead>
- <date>2014-08-28</date>
- <time>08:00:00</time>
+ <date>2014-08-29</date>
+ <time>09:00:00</time>
  <version>
-  <release>1.2.0</release>
+  <release>1.2.1</release>
   <api>1.1.1</api>
  </version>
  <stability>
@@ -37,9 +37,7 @@
  </stability>
  <license uri="https://github.com/igbinary/igbinary/blob/master/COPYING">New BSD</license>
  <notes>
-- PECL bug #22614, igbinary_unserialize(FALSE) must return FALSE
-- PHP bug #54662, unserializing nested objects cause crash
-- Other fixes
+- Compatible with PHP 5.2 - 5.6
  </notes>
  <contents>
   <dir name="/">
@@ -115,7 +113,7 @@
  <dependencies>
   <required>
    <php>
-    <min>5.4.0</min>
+    <min>5.2.0</min>
    </php>
    <pearinstaller>
     <min>1.4.0b1</min>
@@ -125,6 +123,40 @@
  <providesextension>igbinary</providesextension>
  <extsrcrelease />
  <changelog>
+  <release>
+   <date>2014-08-29</date>
+   <time>09:00:00</time>
+   <version>
+    <release>1.2.1</release>
+    <api>1.1.1</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="https://github.com/igbinary/igbinary/blob/master/COPYING">New BSD</license>
+   <notes>
+- Compatible with PHP 5.2 - 5.6
+   </notes>
+  </release>
+  <release>
+   <date>2014-08-29</date>
+   <time>08:00:00</time>
+   <version>
+    <release>1.2.0</release>
+    <api>1.1.1</api>
+   </version>
+   <stability>
+    <release>stable</release>
+    <api>stable</api>
+   </stability>
+   <license uri="https://github.com/igbinary/igbinary/blob/master/COPYING">New BSD</license>
+   <notes>
+- PECL bug #22614, igbinary_unserialize(FALSE) must return FALSE
+- PHP bug #54662, unserializing nested objects cause crash
+- Other fixes
+   </notes>
+  </release>
   <release>
    <date>2011-03-14</date>
    <time>12:32:48</time>
