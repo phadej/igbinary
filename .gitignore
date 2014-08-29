@@ -52,5 +52,3 @@ tests/*.log
 tests/*.exp
 tests/*.sh
 tmp-php.ini
-
-package.xml
