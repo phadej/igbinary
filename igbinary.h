@@ -30,7 +30,7 @@
 #	define IGBINARY_API /* nothing special */
 #endif
 
-#define PHP_IGBINARY_VERSION "1.2.1"
+#define PHP_IGBINARY_VERSION "1.2.2-dev"
 
 /** Struct that contains pointers to memory allocation and deallocation functions.
  * @see igbinary_serialize_data
